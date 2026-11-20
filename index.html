@@ -222,8 +222,8 @@ $('takePhoto').addEventListener('click',async()=>{
  const transfer=new DataTransfer();transfer.items.add(file);const input=$('camera');input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));
 });
 })();
-</script></body></html><script>
-/* W1 Kamera: Live-Bild, gezielte Kamerawahl (USB1.0), ein Button nimmt das Foto auf und startet die Erkennung. */
+<script>
+/* W1 Kamera v2: Live-Bild, gezielte Kamerawahl (USB1.0), grösstmögliches Standbild, Anzeige der Fotogrösse. */
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 const BEVORZUGT='USB1.0';
@@ -236,7 +236,14 @@ btn.before(video);
 const wahl=document.createElement('select');
 wahl.style.cssText='display:none;min-height:38px;font:14px Arial;margin:6px 0';
 btn.after(wahl);
-if(location.hash==='#kamera')wahl.style.display='block';
+const info=document.createElement('p');
+info.style.cssText='font-size:14px;color:#546377;margin:2px 0';
+$('status').after(info);
+if(/kamera/.test(location.hash))wahl.style.display='block';
+if(/test/.test(location.hash)){
+ const t=document.querySelector('.tech');if(t)t.style.setProperty('display','block','important');
+ for(const id of ['timing','raw'])$(id).style.setProperty('display','block','important');
+}
 const meldung=t=>{$('status').textContent=t;};
 function stoppen(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;track=null;video.style.display='none';}
 async function oeffnen(id){
@@ -264,18 +271,27 @@ wahl.addEventListener('change',async()=>{
  localStorage.setItem('w1_kamera',wahl.value);stoppen();
  try{await oeffnen(wahl.value);}catch(e){meldung('Kamera konnte nicht gestartet werden.');}
 });
+async function foto(){
+ if(window.ImageCapture){
+  try{
+   const ic=new ImageCapture(track);let opt={};
+   try{const pc=await ic.getPhotoCapabilities();if(pc.imageWidth&&pc.imageHeight)opt={imageWidth:pc.imageWidth.max,imageHeight:pc.imageHeight.max};}catch(e){}
+   const b=await ic.takePhoto(opt);
+   if(b)return {blob:b,art:'Standbild'};
+  }catch(e){}
+ }
+ if(!video.videoWidth)return null;
+ const c=document.createElement('canvas');c.width=video.videoWidth;c.height=video.videoHeight;
+ c.getContext('2d').drawImage(video,0,0);
+ const b=await new Promise(r=>c.toBlob(r,'image/jpeg',.95));
+ return b?{blob:b,art:'Videobild'}:null;
+}
 btn.addEventListener('click',async()=>{
  if(!track||track.readyState!=='live'){await starten();if(!track)return;}
- let blob=null;
- try{if(window.ImageCapture)blob=await new ImageCapture(track).takePhoto();}catch(e){blob=null;}
- if(!blob){
-  if(!video.videoWidth){meldung('Bitte kurz warten, bis das Kamerabild sichtbar ist.');return;}
-  const c=document.createElement('canvas');c.width=video.videoWidth;c.height=video.videoHeight;
-  c.getContext('2d').drawImage(video,0,0);
-  blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.92));
- }
- if(!blob){meldung('Foto konnte nicht erstellt werden.');return;}
- const file=new File([blob],'W1_Begleitschein.jpg',{type:blob.type==='image/png'?'image/png':'image/jpeg'});
+ const res=await foto();
+ if(!res){meldung('Foto konnte nicht erstellt werden. Bitte kurz warten und erneut drücken.');return;}
+ try{const bmp=await createImageBitmap(res.blob);info.textContent='Foto: '+bmp.width+' × '+bmp.height+' Pixel ('+res.art+', '+Math.round(res.blob.size/1024)+' KB)';bmp.close();}catch(e){}
+ const file=new File([res.blob],'W1_Begleitschein.jpg',{type:res.blob.type==='image/png'?'image/png':'image/jpeg'});
  const t=new DataTransfer();t.items.add(file);
  const eingabe=$('camera');eingabe.files=t.files;eingabe.dispatchEvent(new Event('change',{bubbles:true}));
 });
