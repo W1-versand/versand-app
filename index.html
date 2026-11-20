@@ -200,30 +200,7 @@ init();
 })();
 </script>
 <script>
-(()=>{'use strict';
-const $=id=>document.getElementById(id);let stream=null;
-async function stop(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}$('cameraDialog').hidden=true;$('cameraVideo').srcObject=null;}
-$('openCamera').addEventListener('click',async()=>{
- if(!navigator.mediaDevices?.getUserMedia){alert('Direkter Kamerazugriff wird hier nicht unterstützt. Bitte „Bild auswählen“ verwenden.');return;}
- try{
-  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
-  $('cameraVideo').srcObject=stream;$('cameraDialog').hidden=false;await $('cameraVideo').play();
- }catch(e){await stop();alert('Kamera konnte nicht geöffnet werden. In Brave die Kameraberechtigung für diese Website erlauben und prüfen, ob eine andere App die Kamera verwendet. ('+(e.message||e)+')');}
-});
-$('closeCamera').addEventListener('click',stop);
-$('takePhoto').addEventListener('click',async()=>{
- const video=$('cameraVideo');if(!video.videoWidth){alert('Bitte warten, bis das Kamerabild sichtbar ist.');return;}
- const canvas=document.createElement('canvas');canvas.width=video.videoWidth;canvas.height=video.videoHeight;
- canvas.getContext('2d').drawImage(video,0,0);
- const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.92));
- if(!blob){alert('Foto konnte nicht erstellt werden.');return;}
- const file=new File([blob],'W1_Begleitschein.jpg',{type:'image/jpeg'});
- await stop();
- const transfer=new DataTransfer();transfer.items.add(file);const input=$('camera');input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));
-});
-})();
-<script>
-/* W1 Kamera v2: Live-Bild, gezielte Kamerawahl (USB1.0), grösstmögliches Standbild, Anzeige der Fotogrösse. */
+/* W1 Kamera v3: Live-Bild, gezielte Kamerawahl (USB1.0), grösstmögliches Standbild, Anzeige der Fotogrösse. */
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 const BEVORZUGT='USB1.0';
@@ -271,13 +248,12 @@ wahl.addEventListener('change',async()=>{
  localStorage.setItem('w1_kamera',wahl.value);stoppen();
  try{await oeffnen(wahl.value);}catch(e){meldung('Kamera konnte nicht gestartet werden.');}
 });
+function frist(p,ms){return Promise.race([p,new Promise((_,no)=>setTimeout(()=>no(Error('Zeit abgelaufen')),ms))]);}
 async function foto(){
  if(window.ImageCapture){
   try{
-   const ic=new ImageCapture(track);let opt={};
-   try{const pc=await ic.getPhotoCapabilities();if(pc.imageWidth&&pc.imageHeight)opt={imageWidth:pc.imageWidth.max,imageHeight:pc.imageHeight.max};}catch(e){}
-   const b=await ic.takePhoto(opt);
-   if(b)return {blob:b,art:'Standbild'};
+   const b=await frist(new ImageCapture(track).takePhoto(),4000);
+   if(b&&b.size>0)return {blob:b,art:'Standbild'};
   }catch(e){}
  }
  if(!video.videoWidth)return null;
@@ -301,3 +277,4 @@ if(speichern)window.w1SavePending=async(...a)=>{const r=await speichern(...a);$(
 starten();
 })();
 </script>
+</body></html>
