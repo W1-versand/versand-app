@@ -1,0 +1,287 @@
+<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base target="_top"><title>W1 Versand – Tablet</title>
+<script>
+/* W1 Brücke: leitet die bisherigen Aufrufe (google.script.run) über das Internet an Apps Script weiter. */
+(function(){
+ const ADRESSE='https://script.google.com/macros/s/AKfycbziNwOuyBAAdyQFBeAtfjVG7XThhnt2rT0h3iDafmYGuLh_MSOKs2RAV7_dYhB1meWX/exec';
+ function zugangscode(){
+  let c=localStorage.getItem('w1_code')||'';
+  if(!c){c=(prompt('Zugangscode eingeben:')||'').trim();if(c)localStorage.setItem('w1_code',c);}
+  return c;
+ }
+ async function senden(fn,args){
+  const code=zugangscode();
+  if(!code)throw Error('Zugangscode fehlt.');
+  let antwort;
+  try{antwort=await fetch(ADRESSE,{method:'POST',body:JSON.stringify({code:code,fn:fn,args:args})}).then(r=>r.json());}
+  catch(e){throw Error('Keine Verbindung zum Server.');}
+  if(!antwort.ok){if(antwort.auth)localStorage.removeItem('w1_code');throw Error(antwort.error||'Fehler');}
+  return antwort.result;
+ }
+ function laeufer(ok,fail){
+  return new Proxy({},{get:(t,name)=>{
+   if(name==='withSuccessHandler')return f=>laeufer(f,fail);
+   if(name==='withFailureHandler')return f=>laeufer(ok,f);
+   return (...args)=>{senden(name,args).then(v=>{if(ok)ok(v);}).catch(e=>{if(fail)fail(e);});};
+  }});
+ }
+ window.google={script:{run:laeufer(null,null)}};
+})();
+</script>
+
+
+
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f0f3f6;color:#142238;font:19px Arial,sans-serif}main{max-width:940px;margin:auto;padding:12px}section{background:white;border-radius:17px;padding:18px;margin:12px 0;box-shadow:0 1px 4px #0001}h1{font-size:27px;margin:6px 0 12px}h2{font-size:23px;margin:0 0 14px}.btn{width:100%;min-height:68px;display:flex;align-items:center;justify-content:center;text-align:center;border:0;border-radius:14px;padding:14px;background:#125aa5;color:#fff;font:bold 23px Arial;cursor:pointer;margin:10px 0}.secondary{background:#e5edf5;color:#174c80}.green{background:#147a3b}.red{background:#a91f29}.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}label{font-weight:700;font-size:17px}input,select{width:100%;min-height:56px;padding:12px;border:2px solid #cbd5e1;border-radius:10px;font:20px Arial;background:white;margin-top:5px}button:disabled{opacity:.5}.invalid{border:3px solid #c5222b!important;background:#fff0f0!important}.missing-note{color:#a51924;font-weight:bold}#preview{display:block;max-width:100%;max-height:240px;margin:8px auto}#preview[hidden],#cameraDialog[hidden]{display:none!important}.note{color:#546377;font-size:16px}#status{font-weight:700;color:#155b35}#hinweis{font-size:15px;color:#7b3b00;white-space:pre-wrap}#positionen{font-size:17px}#cameraDialog{position:fixed;inset:0;background:#0b1424;z-index:99;padding:12px;display:flex;flex-direction:column;gap:12px}#cameraVideo{width:100%;height:calc(100vh - 190px);object-fit:contain;background:black}#cameraDialog .btn{flex-shrink:0;margin:0}#cameraDialog .two{flex-shrink:0}#timing,#raw,#ocrtext,#run,#lookup,#file,#camera,.tech{display:none!important}.werklabel{font-size:22px}.intro{font-size:16px;color:#4b5563;margin:4px 0}.pill{background:#edf7ef;border-radius:12px;padding:12px;font-weight:bold}.compact{margin-top:4px}#speicherstatus{font-size:17px}#showphoto{font-size:14px;min-height:36px} .small-actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:8px 0}.small-actions .btn,.small-actions label{width:auto;min-height:38px;margin:0;padding:8px 12px;font:bold 14px Arial;border-radius:9px}.main-camera{min-height:105px;font-size:29px;background:#0756ae;box-shadow:0 4px 0 #073b73}.cancel-btn{background:#f8e9e9;color:#9b1c1c;border:1px solid #d9a4a4}#sonderfrei{margin-top:8px}@media(max-width:580px){.grid{grid-template-columns:1fr 1fr;gap:8px}.grid label{font-size:14px}.grid input{font-size:17px;padding:9px}.two{gap:8px}.btn{font-size:19px}section{padding:13px}h1{font-size:23px}}@media(min-width:800px){.grid{grid-template-columns:repeat(3,1fr)}}
+</style></head><body><main>
+<h1>📦 W1 – Versand</h1>
+<section><button type="button" class="btn main-camera" id="openCamera">📷 BEGLEITSCHEIN FOTOGRAFIEREN</button><div class="small-actions"><label class="btn secondary" for="file">Begleitschein-Bild auswählen</label><button class="btn secondary" id="showphoto" type="button" hidden>Foto anzeigen</button><button class="btn cancel-btn" id="cancelEntry" type="button">Abbrechen</button></div><input id="camera" type="file" accept="image/jpeg,image/png" capture="environment"><input id="file" type="file" accept="image/jpeg,image/png" style="position:absolute;opacity:0;width:1px;height:1px"><p id="status" role="status">Bereit für den nächsten Begleitschein.</p><img id="preview" hidden alt="Foto"><button id="run" disabled>Erkennung erneut starten</button></section>
+<section><h2>1. Angaben kontrollieren</h2><div class="grid"><label>Materialnummer<input id="material" autocomplete="off"></label><label>Kopfmaterial<input id="kopfmaterial" autocomplete="off"></label><label>Charge<input id="charge" autocomplete="off"></label><label>Stückzahl<input id="menge" inputmode="numeric" autocomplete="off"></label><label>Rahmenvertrag<input id="vertrag" autocomplete="off"></label><label>Bezeichnung<input id="bezeichnung" autocomplete="off"></label></div><p id="missing" class="missing-note" aria-live="polite"></p><p id="hinweis"></p><button id="lookup">Stammdaten erneut prüfen</button></section>
+<section><h2>2. Zielwerk wählen</h2><label class="werklabel">Wohin geht die Palette?<select id="werk"><option value="">BITTE WERK AUSWÄHLEN</option><option value="5113">5113 – WAGENFELD</option><option value="5125">5125 – DIEPHOLZ</option></select></label><label>Sonderaufgabe (nur bei Bedarf)<select id="sonder"><option>Keine</option><option>Zusätzliche Kontrolle</option><option>Nacharbeit</option><option>Sonderprüfung</option></select></label><label>Andere Sonderaufgabe<input id="sonderfrei" placeholder="Nur bei Bedarf"></label><p id="speicherstatus" class="note">Nach der Kontrolle nächste Palette fotografieren.</p><button class="btn green" id="save">✓ LETZTE PALETTE SPEICHERN</button></section>
+<section><h2>3. Versandübersicht</h2><p id="rundenstatus" class="pill">Wird geladen …</p><div id="positionen"></div><button class="btn" id="finish">✓ LIEFERSCHEINE ABSCHLIESSEN</button><button class="btn secondary" id="print" hidden>🖨 A5-LIEFERSCHEINE DRUCKEN</button><button class="btn secondary" id="newround">＋ NEUE VERSANDERFASSUNG</button></section>
+<section class="tech"><pre id="timing"></pre><pre id="raw"></pre><pre id="ocrtext"></pre></section>
+</main><div id="cameraDialog" hidden><video id="cameraVideo" autoplay playsinline muted></video><div class="two"><button class="btn green" id="takePhoto">📷 FOTO AUFNEHMEN</button><button class="btn red" id="closeCamera">ABBRECHEN</button></div></div>
+<script>
+(()=>{'use strict';const $=id=>document.getElementById(id);let selected=null,busy=false,lookupSerial=0,scanEpoch=0;const status=s=>$('status').textContent=s;
+function loadScript(url){return new Promise((ok,fail)=>{const s=document.createElement('script');s.src=url;s.onload=ok;s.onerror=()=>fail(Error('Bibliothek konnte nicht geladen werden.'));document.head.appendChild(s);});}
+async function select(e){const f=e.target.files?.[0];e.target.value='';if(!f||busy)return;if(!/^image\/(jpeg|png)$/.test(f.type)){status('Bitte JPG oder PNG verwenden.');return;}if(f.size>16*1024*1024){status('Foto zu groß (maximal 16 MB).');return;}try{if(window.w1HasPending && window.w1HasPending())await window.w1SavePending();}catch(err){status('Vorherige Position nicht gespeichert: '+(err.message||err)+'. Foto bleibt erhalten.');return;}selected=f;scanEpoch++;lookupSerial++;const r=new FileReader();r.onload=()=>{$('preview').src=r.result;$('preview').hidden=true;$('showphoto').hidden=false;$('showphoto').textContent='Foto anzeigen';window.w1Pending=false;$('werk').value='';$('sonder').value='Keine';$('sonderfrei').value='';$('run').disabled=false;status('Foto wird geprüft …');document.body.classList.add('has-result');$('run').click();setTimeout(window.markFields,0);};r.onerror=()=>status('Foto konnte nicht geladen werden.');r.readAsDataURL(f);}
+$('cancelEntry').addEventListener('click',async()=>{scanEpoch++;lookupSerial++;selected=null;busy=false;window.w1Pending=false;document.body.classList.remove('has-result');$('camera').value='';$('file').value='';$('preview').removeAttribute('src');$('preview').hidden=true;$('showphoto').hidden=true;$('run').disabled=true;for(const id of ['material','kopfmaterial','charge','menge','vertrag','bezeichnung'])$(id).value='';$('vertrag').dataset.barcode='';$('werk').value='';$('sonder').value='Keine';$('sonderfrei').value='';$('missing').textContent='';$('hinweis').textContent='';$('speicherstatus').textContent='Erfassung verworfen. Bereit für den nächsten Begleitschein.';status('Bereit für den nächsten Begleitschein.');window.markFields?.();window.scrollTo({top:0,behavior:'smooth'});});
+$('camera').addEventListener('change',select);$('file').addEventListener('change',select);$('showphoto').addEventListener('click',()=>{const el=$('preview');el.hidden=!el.hidden;$('showphoto').textContent=el.hidden?'Foto anzeigen':'Foto ausblenden';});
+// Barcode-Suchalgorithmus aus W1-Barcode-3 unverändert.
+function scan(canvas){const reader=new ZXingBrowser.BrowserMultiFormatReader();try{const result=reader.decodeFromCanvas(canvas);return result&&result.getText?result.getText():null;}catch(e){return null;}finally{if(reader.reset)reader.reset();}}
+function canvasFromImage(img,scale,rotate,contrast){const w=img.naturalWidth,h=img.naturalHeight;const factor=Math.min(scale,2600/Math.max(w,h));const sw=Math.max(1,Math.round(w*factor)),sh=Math.max(1,Math.round(h*factor));const c=document.createElement('canvas');const quarter=rotate%180!==0;c.width=quarter?sh:sw;c.height=quarter?sw:sh;const x=c.getContext('2d',{willReadFrequently:true});x.translate(c.width/2,c.height/2);x.rotate(rotate*Math.PI/180);x.drawImage(img,-sw/2,-sh/2,sw,sh);if(contrast){const im=x.getImageData(0,0,c.width,c.height);for(let i=0;i<im.data.length;i+=4){const g=.299*im.data[i]+.587*im.data[i+1]+.114*im.data[i+2];const v=Math.max(0,Math.min(255,(g-128)*1.55+140));im.data[i]=im.data[i+1]=im.data[i+2]=v;}x.putImageData(im,0,0);}return c;}
+function crop(c,x,y,w,h){const out=document.createElement('canvas');out.width=Math.max(1,Math.round(c.width*w));out.height=Math.max(1,Math.round(c.height*h));out.getContext('2d').drawImage(c,c.width*x,c.height*y,c.width*w,c.height*h,0,0,out.width,out.height);return out;}
+function formatM(d){return /^\d{14}$/.test(d)?d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6,9)+'.'+d.slice(9,12)+'-'+d.slice(12):d;}
+function barcodeValues(found){const r={H:'',Q:'',M:'',K:''};for(const prefix of Object.keys(r)){const vals=[...new Set(found.filter(s=>s.toUpperCase().startsWith(prefix)).map(s=>s.slice(1)))];if(vals.length===1)r[prefix]=prefix==='M'?formatM(vals[0]):vals[0];}return r;}
+async function findBarcodes(img){const results=[],add=s=>{if(s&&!results.includes(s))results.push(s);};const regions=[[0,0,1,1],[.10,.20,.78,.42],[.13,.34,.70,.21],[.13,.42,.72,.21],[.12,.55,.76,.30],[.18,.67,.66,.19],[.22,.37,.28,.12],[.48,.43,.31,.14],[.20,.72,.58,.13],[.19,.61,.49,.14]];let attempts=0;for(const contrast of [false,true]){const c=canvasFromImage(img,1,0,contrast);for(const [x,y,w,h] of regions){attempts++;status('Barcode-Suche: '+attempts+' Bereiche, '+results.length+' Code(s) gefunden …');add(scan(crop(c,x,y,w,h)));if(attempts%4===0)await new Promise(r=>setTimeout(r,0));}if(['H','Q','M','K'].every(p=>results.some(s=>s.toUpperCase().startsWith(p))))break;}if(!['H','Q','M','K'].every(p=>results.some(s=>s.toUpperCase().startsWith(p)))){for(const angle of [90,270]){const c=canvasFromImage(img,1,angle,false);add(scan(c));if(['H','Q','M','K'].every(p=>results.some(s=>s.toUpperCase().startsWith(p))))break;}}return results;}
+// Nur eindeutig erkennbare gedruckte Materialnummern im oberen Formularabschnitt.
+function materialFromOCR(first,second){function extract(t){t=String(t||'').replace(/[‐‑‒–−]/g,'-');const split=t.search(/M?aterial\s+vom\s+Lohnbearbeit/i);if(split>=0)t=t.slice(0,split);const vals=[...t.matchAll(/(?:^|[^\d])([0-9]{3}\s*[.,]\s*[0-9]{3}\s*[.,]\s*[0-9]{3}\s*[.,]\s*[0-9]{3}\s*-\s*[0-9]{2})(?!\d)/g)].map(m=>m[1].replace(/\s/g,'').replace(/,/g,'.'));return [...new Set(vals)];}const a=extract(first),b=extract(second);if(a.length===1&&b.length===1&&a[0]!==b[0])return '';if(a.length>1||b.length>1)return '';return a[0]||b[0]||'';}
+async function enhance(file){const img=await createImageBitmap(file);try{const scale=Math.min(2.5,2800/Math.max(img.width,img.height));const w=Math.max(1,Math.round(img.width*scale)),h=Math.max(1,Math.round(img.height*scale));const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(img,0,0,w,h);const im=x.getImageData(0,0,w,h),d=im.data;for(let i=0;i<d.length;i+=4){const g=.299*d[i]+.587*d[i+1]+.114*d[i+2];const v=Math.max(0,Math.min(255,(g-128)*1.65+145));d[i]=d[i+1]=d[i+2]=v;}x.putImageData(im,0,0);return c;}finally{img.close();}}
+function reverseLookup(kopf,kcode){return new Promise((resolve,reject)=>{if(!window.google?.script?.run){reject(Error('Stammdatenabgleich nur in der Apps-Script-Web-App möglich.'));return;}google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).w1MaterialAusStammdaten(kopf,kcode);});}
+function serverLookup(material,kopf,kcode){return new Promise((resolve,reject)=>{if(!window.google?.script?.run){reject(Error('Tabellenabgleich nur über die Apps-Script-Web-App möglich.'));return;}google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).w1KombiStammdatenPruefen(material,kopf,kcode);});}
+async function lookup(){const serial=++lookupSerial,material=$('material').value.trim(),kopf=$('kopfmaterial').value.trim(),kcode=$('vertrag').dataset.barcode||'';if(!material||!kopf){$('hinweis').textContent='Für die eindeutige Tabellenzuordnung bitte Materialnummer und Kopfmaterialnummer ergänzen.';return;} $('hinweis').textContent='Stammdaten werden geprüft …';try{const res=await serverLookup(material,kopf,kcode);if(serial!==lookupSerial)return;if(res.bezeichnung)$('bezeichnung').value=res.bezeichnung;if(res.auftrag){$('vertrag').value=res.auftrag;}else if(!kcode){$('vertrag').value='';}if(kcode&&res.auftrag&&kcode!==res.auftrag){$('vertrag').value=kcode;$('hinweis').textContent='WARNUNG: K-Barcode '+kcode+' stimmt nicht mit Tabellen-Rahmenvertrag '+res.auftrag+' überein. Bitte manuell klären.';}else $('hinweis').textContent=res.hinweis||'Stammdaten geprüft.';}catch(e){if(serial!==lookupSerial)return;$('hinweis').textContent='Tabellenprüfung fehlgeschlagen: '+(e.message||e);}}
+$('lookup').addEventListener('click',()=>{ // Nach manueller Korrektur keinen alten Barcode als verbindlichen Wert verwenden.
+$('vertrag').dataset.barcode='';lookup();});
+for(const id of ['material','kopfmaterial'])$(id).addEventListener('change',()=>{ $('vertrag').dataset.barcode='';$('bezeichnung').value='';$('hinweis').textContent='Materialangaben geändert. Bitte „Stammdaten erneut prüfen“ drücken.';});
+// Die Materialzone ist ein großzügiger Suchbereich, keine garantierte Papierposition.
+// Falls sie nicht ausreicht, folgt die bisherige vollständige OCR.
+function materialAusschnitt(img){
+ const c=document.createElement('canvas');
+ const max=2600, f=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
+ const w=Math.round(img.naturalWidth*f),h=Math.round(img.naturalHeight*f);
+ const base=document.createElement('canvas');base.width=w;base.height=h;
+ base.getContext('2d').drawImage(img,0,0,w,h);
+ // Breiter Bereich um die obere Materialnummer, mit Reserve für schräge Fotos.
+ return crop(base,.10,.23,.82,.29);
+}
+function kontrastCanvas(src){
+ const c=document.createElement('canvas');c.width=src.width;c.height=src.height;
+ const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(src,0,0);
+ const im=x.getImageData(0,0,c.width,c.height),d=im.data;
+ for(let i=0;i<d.length;i+=4){const g=.299*d[i]+.587*d[i+1]+.114*d[i+2];const v=Math.max(0,Math.min(255,(g-128)*1.65+145));d[i]=d[i+1]=d[i+2]=v;}
+ x.putImageData(im,0,0);return c;
+}
+$('run').addEventListener('click',async()=>{
+ if(!selected||busy)return;
+ busy=true;$('run').disabled=true;lookupSerial++;const thisScan=scanEpoch;const checkCancelled=()=>{if(thisScan!==scanEpoch)throw Error('Erfassung abgebrochen');};
+ for(const id of ['material','kopfmaterial','charge','menge','vertrag','bezeichnung'])$(id).value='';
+ $('vertrag').dataset.barcode='';$('raw').textContent='Barcode-Suche läuft …';
+ $('ocrtext').textContent='OCR noch nicht gestartet.';$('timing').textContent='Messung läuft …';
+ const t0=performance.now(),zeiten=[];
+ async function zeit(name,fn){const t=performance.now();try{return await fn();}finally{zeiten.push([name,(performance.now()-t)/1000]);}}
+ let methode='';
+ try{
+  await zeit('Barcode-Bibliothek laden',async()=>{status('Barcode-Bibliothek laden …');if(!window.ZXingBrowser)await loadScript('https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/zxing-browser.min.js');});
+  const img=new Image();img.src=$('preview').src;await img.decode();
+  const found=await zeit('Barcode-Erkennung',()=>findBarcodes(img));checkCancelled();
+  $('raw').textContent=found.length?found.map((s,i)=>(i+1)+'. '+s).join('\n'):'Keine Barcodes dekodiert.';
+  const r=barcodeValues(found);$('charge').value=r.H;$('menge').value=r.Q;$('kopfmaterial').value=r.M;$('vertrag').value=r.K;$('vertrag').dataset.barcode=r.K;
+  let tabellenTreffer=false;
+  if(r.M){
+   try{
+    status('Materialnummer in Stammdaten suchen …');
+    const stamm=await zeit('Schnellsuche Google Sheets',()=>reverseLookup(r.M,r.K));checkCancelled();
+    if(stamm.eindeutig && stamm.material){
+     $('material').value=stamm.material;
+     if(stamm.bezeichnung)$('bezeichnung').value=stamm.bezeichnung;
+     if(stamm.auftrag)$('vertrag').value=stamm.auftrag;
+     $('hinweis').textContent=stamm.hinweis+' Bitte Materialnummer am Foto kontrollieren.';
+     $('ocrtext').textContent='OCR übersprungen: eindeutige Materialnummer anhand der Stammdaten ermittelt.';
+     methode='Stammdaten – ohne OCR';
+     tabellenTreffer=true;
+    }else{
+     $('hinweis').textContent=(stamm.hinweis||'Kein eindeutiger Treffer.')+' Materialnummer wird per OCR gesucht.';
+    }
+   }catch(err){$('hinweis').textContent='Stammdaten-Schnellsuche fehlgeschlagen: '+(err.message||err)+'. OCR wird versucht.';}
+  }
+  if(!tabellenTreffer){
+   await zeit('OCR-Bibliothek laden',async()=>{status('OCR-Bibliothek laden …');if(!window.Tesseract)await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js');});
+   let worker=null;
+   try{
+    worker=await zeit('OCR initialisieren',()=>Tesseract.createWorker('deu'));checkCancelled();
+    const zone=materialAusschnitt(img);
+    status('OCR Materialbereich – erster Versuch …');
+    const first=await zeit('OCR Materialbereich original',async()=>((await worker.recognize(zone)).data.text||''));checkCancelled();
+    status('OCR Materialbereich – zweiter Versuch …');
+    const zone2=kontrastCanvas(zone);
+    await worker.setParameters({tessedit_pageseg_mode:Tesseract.PSM.SPARSE_TEXT});
+    const second=await zeit('OCR Materialbereich verbessert',async()=>((await worker.recognize(zone2)).data.text||''));checkCancelled();
+    let material=materialFromOCR(first,second);
+    $('ocrtext').textContent='=== MATERIALBEREICH ORIGINAL ===\n'+first+'\n=== MATERIALBEREICH VERBESSERT ===\n'+second;
+    if(material){methode='OCR Materialbereich';}
+    else{
+     methode='Vollbild-Rückfall';
+     status('Materialnummer noch unklar – bisherige Vollbild-OCR …');
+     await worker.setParameters({tessedit_pageseg_mode:Tesseract.PSM.AUTO});
+     const full1=await zeit('Rückfall: OCR Originalfoto',async()=>((await worker.recognize(selected)).data.text||''));checkCancelled();
+     const enhanced=await zeit('Rückfall: Bild verbessern',()=>enhance(selected));
+     await worker.setParameters({tessedit_pageseg_mode:Tesseract.PSM.SPARSE_TEXT});
+     const full2=await zeit('Rückfall: OCR verbessertes Foto',async()=>((await worker.recognize(enhanced)).data.text||''));checkCancelled();
+     material=materialFromOCR(full1,full2);
+     $('ocrtext').textContent+='\n=== RÜCKFALL ORIGINAL ===\n'+full1+'\n=== RÜCKFALL VERBESSERT ===\n'+full2;
+    }
+    $('material').value=material;
+   }finally{if(worker)await zeit('OCR beenden',()=>worker.terminate());}
+   if($('material').value&&$('kopfmaterial').value){await zeit('Google-Sheets-Abgleich',()=>lookup());}
+   else $('hinweis').textContent='Materialnummer nicht eindeutig erkannt? Bitte manuell ergänzen und Stammdaten erneut prüfen.';
+  }
+  checkCancelled();status('Erkennung fertig – Angaben kontrollieren und Werk wählen.');window.w1Pending=true;document.body.classList.add('has-result');window.scrollTo({top:0,behavior:'smooth'});
+ }catch(e){if(thisScan!==scanEpoch)return;window.w1Pending=true;status('Fehler: '+(e.message||e));$('hinweis').textContent='Bereits erkannte Felder bitte prüfen. Fehlende Werte können manuell ergänzt werden.';window.markFields();}
+ finally{
+  const gesamt=(performance.now()-t0)/1000;
+  $('timing').textContent=zeiten.map(([n,v])=>n+': '+v.toFixed(2).replace('.',',')+' s').join('\n')+'\nOCR-Weg: '+(methode||'nicht abgeschlossen')+'\nGesamtzeit: '+gesamt.toFixed(2).replace('.',',')+' s';
+  busy=false;$('run').disabled=!selected;window.markFields();
+ }
+});
+})();
+</script>
+<script>
+(()=>{'use strict';const $=id=>document.getElementById(id);let roundId=localStorage.getItem('w1_versand_test5_runde')||'',roundStatus='OFFEN',saving=false,hasData=false,pendingId='';window.w1Pending=false;
+function call(name,...args){return new Promise((ok,fail)=>{if(!window.google?.script?.run){fail(Error('Nur über die bereitgestellte Apps-Script-Web-App nutzbar.'));return;}google.script.run.withSuccessHandler(ok).withFailureHandler(fail)[name](...args);});}
+function val(id){return $(id).value.trim();}
+function normalMenge(v){const t=String(v??'').trim().replace(/\s+/g,'').replace(/^Q/i,'');return /^(?:[0-9]+|[1-9][0-9]{0,2}(?:\.[0-9]{3})+)$/.test(t)?t.replace(/\./g,''):t;}
+function markFields(){const labels={material:'Materialnummer',kopfmaterial:'Kopfmaterialnummer',charge:'Charge',menge:'Menge',vertrag:'Rahmenvertrag',bezeichnung:'Artikelbezeichnung',werk:'Zielwerk'};const missing=[];for(const [id,name] of Object.entries(labels)){const el=$(id);const value=id==='menge'?normalMenge(el.value):el.value.trim();const bad=!value||(id==='menge'&&(!/^\d+$/.test(value)||Number(value)<1));el.classList.toggle('invalid',bad);if(bad)missing.push(name);} $('missing').textContent=window.w1Pending&&missing.length?'Bitte ergänzen oder prüfen: '+missing.join(', '):'';return missing;}
+window.markFields=markFields;
+ for(const id of ['material','kopfmaterial','charge','menge','vertrag','bezeichnung','werk']){const el=$(id);el.addEventListener('input',markFields);el.addEventListener('change',markFields);}
+function current(){return {id:pendingId||(pendingId=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random())),material:val('material'),kopf:val('kopfmaterial'),charge:val('charge'),menge:normalMenge(val('menge')),vertrag:val('vertrag'),bezeichnung:val('bezeichnung'),werk:val('werk'),sonder:val('sonderfrei')||val('sonder')};}
+function validate(p){window.markFields();if(!p.werk)throw Error('Bitte das Zielwerk auswählen.');for(const k of ['material','kopf','charge','menge','vertrag','bezeichnung'])if(!p[k])throw Error('Bitte fehlendes Feld ergänzen: '+k);if(!/^\d+$/.test(p.menge)||Number(p.menge)<1)throw Error('Ungültige Menge.');if(($('hinweis').textContent||'').includes('WARNUNG'))throw Error('Stammdatenwarnung erst klären.');}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function render(data){roundStatus=data.runde?.status||'OFFEN';const list=data.positionen||[];hasData=list.length>0;const distinct=new Set(list.map(p=>JSON.stringify([p.werk,p.material,p.vertrag]))).size;$('rundenstatus').textContent=(roundStatus==='ABGESCHLOSSEN'?'Abgeschlossen':'In Bearbeitung')+' · '+list.length+' Palette(n) · '+distinct+' A5-Lieferschein(e)';const by={5113:list.filter(p=>p.werk==='5113'),5125:list.filter(p=>p.werk==='5125')};$('positionen').innerHTML=Object.entries(by).map(([w,items])=>'<h3>'+w+' – '+(w==='5113'?'Wagenfeld':'Diepholz')+' ('+items.length+')</h3>'+(!items.length?'<p class="note">Noch keine Position.</p>':items.map(p=>'<div style="border-bottom:1px solid #ddd;padding:9px 0">'+esc(p.material)+' · '+esc(p.menge)+' St. · Charge '+esc(p.charge)+(p.lieferschein?' · '+esc(p.lieferschein):'')+'<br><small>'+esc(p.bezeichnung)+' · '+esc(p.sonder)+'</small></div>').join(''))).join('');$('print').hidden=roundStatus!=='ABGESCHLOSSEN';$('finish').disabled=roundStatus!=='OFFEN'||!hasData;$('save').disabled=roundStatus!=='OFFEN';if(data.sonder?.length){const old=$('sonder').value;$('sonder').replaceChildren(...data.sonder.map(s=>new Option(s,s)));$('sonder').value=data.sonder.includes(old)?old:(data.sonder.includes('Keine')?'Keine':data.sonder[0]);}window.w1LastData=data;}
+async function init(){try{let d=roundId?await call('w1VersandLaden',roundId):null;if(!d?.runde||d.runde.status!=='OFFEN'){d=await call('w1VersandNeueRunde');roundId=d.runde.id;localStorage.setItem('w1_versand_test5_runde',roundId);}render(d);}catch(e){$('rundenstatus').textContent='Speicherung nicht erreichbar: '+(e.message||e);}}
+window.w1HasPending=()=>window.w1Pending===true;
+window.w1SavePending=async()=>{if(!window.w1Pending)return;if(saving)throw Error('Speicherung läuft noch.');if(roundStatus!=='OFFEN')throw Error('Bitte neue Erfassungsrunde starten.');const p=current();validate(p);saving=true;$('speicherstatus').textContent='Speichere Position in Google Sheets …';try{const d=await call('w1VersandPositionSpeichern',roundId,p);render(d);window.w1Pending=false;pendingId='';$('speicherstatus').textContent='Position dauerhaft gespeichert.';window.markFields();}catch(e){$('speicherstatus').textContent='Speicherung fehlgeschlagen: '+(e.message||e);throw e;}finally{saving=false;}};
+$('save').addEventListener('click',async()=>{try{await window.w1SavePending();}catch(e){alert(e.message||e);}});
+$('finish').addEventListener('click',async()=>{if(window.w1Pending){try{await window.w1SavePending();}catch(e){alert('Abschluss nicht möglich: '+(e.message||e));return;}}if(!hasData||!confirm('Für jedes Material je Werk und Rahmenvertrag einen A5-Lieferschein erstellen? Jede Charge bleibt einzeln aufgeführt. Jetzt endgültig abschließen?'))return;try{render(await call('w1VersandAbschliessen',roundId));alert('Lieferscheine abgeschlossen. Jetzt A5 drucken.');}catch(e){alert('Abschluss fehlgeschlagen: '+(e.message||e));}});
+$('newround').addEventListener('click',async()=>{if(window.w1Pending){alert('Bitte aktuelle Position zuerst speichern oder abschließen.');return;}if(roundStatus==='OFFEN'&&hasData){alert('Bitte die aktuelle Erfassungsrunde zuerst abschließen.');return;}try{const d=await call('w1VersandNeueRunde');roundId=d.runde.id;localStorage.setItem('w1_versand_test5_runde',roundId);render(d);$('speicherstatus').textContent='Neue Erfassungsrunde gestartet.';}catch(e){alert(e.message||e);}});
+$('print').addEventListener('click',()=>{
+ const d=window.w1LastData;if(!d||d.runde.status!=='ABGESCHLOSSEN')return;
+ const groups=new Map();
+ for(const p of d.positionen){
+  if(!p.lieferschein)continue;
+  if(!groups.has(p.lieferschein))groups.set(p.lieferschein,[]);
+  groups.get(p.lieferschein).push(p);
+ }
+ if(!groups.size){alert('Keine abgeschlossenen Lieferscheine vorhanden.');return;}
+ const fmt=n=>Number(n).toLocaleString('de-DE');
+ const body=[...groups].map(([no,rows])=>{
+  const first=rows[0],werk=first.werk==='5113'?'Wagenfeld':'Diepholz';
+  const chargeRows=rows.map(p=>'<tr><td>'+esc(p.charge)+'</td><td class="num">'+fmt(p.menge)+'</td></tr>').join('');
+  const sum=rows.reduce((s,p)=>s+Number(p.menge),0);
+  return '<article><div class="head"><h1>Rücklieferschein W1</h1><div><strong>LS-Nr. '+esc(no)+'</strong><br>Datum: '+new Date().toLocaleDateString('de-DE')+'</div></div>'+
+   '<p><strong>Empfänger:</strong> Werk '+esc(first.werk)+' – '+werk+'</p>'+
+   '<p><strong>Materialnummer:</strong> '+esc(first.material)+'</p>'+
+   '<p><strong>Rahmenvertrag:</strong> '+esc(first.vertrag)+'</p>'+
+   '<table><thead><tr><th>Charge</th><th class="num">Stückzahl</th></tr></thead><tbody>'+chargeRows+'</tbody><tfoot><tr><th>Gesamtstückzahl</th><th class="num">'+fmt(sum)+'</th></tr></tfoot></table></article>';
+ }).join('');
+ const win=window.open('','_blank');if(!win){alert('Bitte Pop-ups für die Druckansicht erlauben.');return;}
+ win.document.write('<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>W1 A5-Rücklieferscheine</title><style>@page{size:A5 landscape;margin:11mm}*{box-sizing:border-box}body{font:12px Arial,sans-serif;color:#222;margin:0}article{break-after:page;page-break-after:always}article:last-child{break-after:auto;page-break-after:auto}.head{display:flex;justify-content:space-between;align-items:start;border-bottom:2px solid #222;margin-bottom:10px}.head div{text-align:right;line-height:1.5}h1{font-size:20px;margin:0 0 10px}p{margin:7px 0}table{width:100%;border-collapse:collapse;margin-top:13px}td,th{border:1px solid #999;padding:6px 9px;text-align:left}th{background:#eee}.num{text-align:right}tfoot th{font-weight:bold}@media screen{body{max-width:850px;margin:25px auto;background:#eee}article{background:white;padding:20px;margin-bottom:20px;min-height:190px}}</style></head><body>'+body+'</body></html>');
+ win.document.close();win.focus();
+});
+init();
+})();
+</script>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id);let stream=null;
+async function stop(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}$('cameraDialog').hidden=true;$('cameraVideo').srcObject=null;}
+$('openCamera').addEventListener('click',async()=>{
+ if(!navigator.mediaDevices?.getUserMedia){alert('Direkter Kamerazugriff wird hier nicht unterstützt. Bitte „Bild auswählen“ verwenden.');return;}
+ try{
+  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
+  $('cameraVideo').srcObject=stream;$('cameraDialog').hidden=false;await $('cameraVideo').play();
+ }catch(e){await stop();alert('Kamera konnte nicht geöffnet werden. In Brave die Kameraberechtigung für diese Website erlauben und prüfen, ob eine andere App die Kamera verwendet. ('+(e.message||e)+')');}
+});
+$('closeCamera').addEventListener('click',stop);
+$('takePhoto').addEventListener('click',async()=>{
+ const video=$('cameraVideo');if(!video.videoWidth){alert('Bitte warten, bis das Kamerabild sichtbar ist.');return;}
+ const canvas=document.createElement('canvas');canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+ canvas.getContext('2d').drawImage(video,0,0);
+ const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.92));
+ if(!blob){alert('Foto konnte nicht erstellt werden.');return;}
+ const file=new File([blob],'W1_Begleitschein.jpg',{type:'image/jpeg'});
+ await stop();
+ const transfer=new DataTransfer();transfer.items.add(file);const input=$('camera');input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));
+});
+})();
+</script></body></html><script>
+/* W1 Kamera: Live-Bild, gezielte Kamerawahl (USB1.0), ein Button nimmt das Foto auf und startet die Erkennung. */
+(()=>{'use strict';
+const $=id=>document.getElementById(id);
+const BEVORZUGT='USB1.0';
+let stream=null,track=null,startet=false;
+const alt=$('openCamera'),btn=alt.cloneNode(true);alt.replaceWith(btn);
+const video=document.createElement('video');
+video.autoplay=true;video.muted=true;video.playsInline=true;
+video.style.cssText='display:none;width:100%;max-height:260px;background:#000;border-radius:12px;object-fit:contain';
+btn.before(video);
+const wahl=document.createElement('select');
+wahl.style.cssText='display:none;min-height:38px;font:14px Arial;margin:6px 0';
+btn.after(wahl);
+if(location.hash==='#kamera')wahl.style.display='block';
+const meldung=t=>{$('status').textContent=t;};
+function stoppen(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;track=null;video.style.display='none';}
+async function oeffnen(id){
+ const v={width:{ideal:4096},height:{ideal:2160}};
+ if(id)v.deviceId={exact:id};
+ stream=await navigator.mediaDevices.getUserMedia({video:v,audio:false});
+ track=stream.getVideoTracks()[0];
+ video.srcObject=stream;video.style.display='block';await video.play();
+ try{await track.applyConstraints({advanced:[{focusMode:'continuous'}]});}catch(e){}
+}
+async function starten(){
+ if(startet)return;startet=true;
+ try{
+  stoppen();await oeffnen('');
+  const liste=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput');
+  wahl.replaceChildren(...liste.map((d,i)=>new Option(d.label||('Kamera '+(i+1)),d.deviceId)));
+  const gemerkt=localStorage.getItem('w1_kamera')||'';
+  const ziel=liste.find(d=>d.deviceId===gemerkt)||liste.find(d=>d.label.includes(BEVORZUGT));
+  if(ziel&&ziel.deviceId!==track.getSettings().deviceId){stoppen();await oeffnen(ziel.deviceId);}
+  wahl.value=track.getSettings().deviceId;
+ }catch(e){stoppen();meldung('Kamera konnte nicht gestartet werden ('+(e.name||'Fehler')+'). Bitte „Begleitschein-Bild auswählen“ nutzen.');}
+ finally{startet=false;}
+}
+wahl.addEventListener('change',async()=>{
+ localStorage.setItem('w1_kamera',wahl.value);stoppen();
+ try{await oeffnen(wahl.value);}catch(e){meldung('Kamera konnte nicht gestartet werden.');}
+});
+btn.addEventListener('click',async()=>{
+ if(!track||track.readyState!=='live'){await starten();if(!track)return;}
+ let blob=null;
+ try{if(window.ImageCapture)blob=await new ImageCapture(track).takePhoto();}catch(e){blob=null;}
+ if(!blob){
+  if(!video.videoWidth){meldung('Bitte kurz warten, bis das Kamerabild sichtbar ist.');return;}
+  const c=document.createElement('canvas');c.width=video.videoWidth;c.height=video.videoHeight;
+  c.getContext('2d').drawImage(video,0,0);
+  blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.92));
+ }
+ if(!blob){meldung('Foto konnte nicht erstellt werden.');return;}
+ const file=new File([blob],'W1_Begleitschein.jpg',{type:blob.type==='image/png'?'image/png':'image/jpeg'});
+ const t=new DataTransfer();t.items.add(file);
+ const eingabe=$('camera');eingabe.files=t.files;eingabe.dispatchEvent(new Event('change',{bubbles:true}));
+});
+/* Foto nach dem Speichern der Position aus der Anzeige entfernen. */
+const speichern=window.w1SavePending;
+if(speichern)window.w1SavePending=async(...a)=>{const r=await speichern(...a);$('preview').removeAttribute('src');$('preview').hidden=true;$('showphoto').hidden=true;return r;};
+starten();
+})();
+</script>
