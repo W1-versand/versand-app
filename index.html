@@ -112,7 +112,7 @@ input,select{width:100%;min-height:54px;padding:8px 12px;border:3px solid #cbd5e
  <button type="button" class="btn main-camera" id="openCamera">📷 BEGLEITSCHEIN FOTOGRAFIEREN</button>
  <p id="rundenstatus" class="pill">Wird geladen …</p>
  <button class="btn green" id="finish" hidden>✓ FERTIG – LIEFERSCHEINE DRUCKEN</button>
- <p style="margin:0;font-size:13px;color:#8a97a8">Version 21.11.2026 – Layout A5 quer</p>
+ <p style="margin:0;font-size:13px;color:#8a97a8">Version 21.11.2026 – Tabellen-Ersatz gelb</p>
  <div class="row"><button class="btn secondary" id="reprint" type="button">Letzte Lieferscheine nochmal drucken</button><button class="btn secondary" id="sammel" type="button">Sammellieferschein heute (ohne Preise)</button><label class="btn secondary" for="file" style="margin:0">Bild aus Datei auswählen</label></div>
 </div>
 
@@ -242,7 +242,7 @@ $('run').addEventListener('click',async()=>{
    try{
     status('Materialnummer in Stammdaten suchen …');
     const stamm=await zeit('Schnellsuche Google Sheets',()=>reverseLookup(r.M,r.K));checkCancelled();
-    if(stamm.eindeutig && stamm.material){
+    if(stamm.material){
      $('material').value=stamm.material;
      if(stamm.bezeichnung)$('bezeichnung').value=stamm.bezeichnung;
      if(stamm.auftrag)$('vertrag').value=stamm.auftrag;
@@ -340,8 +340,11 @@ $('sonderOk').addEventListener('click',()=>{const t=$('sonderText').value.trim()
 function frage(text,ja,nein){return new Promise(res=>{$('ueberText').textContent=text;$('ueberJa').textContent=ja;$('ueberNein').textContent=nein||'';$('ueberNein').hidden=!nein;$('ueber').hidden=false;const zu=v=>{$('ueber').hidden=true;$('ueberJa').onclick=$('ueberNein').onclick=null;res(v);};$('ueberJa').onclick=()=>zu(true);$('ueberNein').onclick=()=>zu(false);});}
 async function drucken(list){
  const g=gruppen(list.filter(p=>p.lieferschein));if(!g.size){frage('Keine Lieferscheine zum Drucken vorhanden.','OK');return false;}
- let br={};try{br=await call('w1Briefkopf');}catch(e){br=window.w1Brief||{};}
+ let br={},fehler='';try{br=await call('w1Briefkopf');}catch(e){fehler=String(e.message||e);br=window.w1Brief||{};}
  window.w1Brief=br;
+ if(fehler||!(br.firma||br.adresse||br.werk5113||br.werk5125)){
+  const ok=await frage(fehler?'ACHTUNG: Die Adressdaten konnten nicht geladen werden ('+fehler+'). Trotzdem drucken?':'ACHTUNG: Im Blatt „Einstellungen“ sind keine Adressen eingetragen, oder die Google-Seite ist noch nicht auf dem neuesten Stand (neue Version bereitstellen). Trotzdem drucken?','Trotzdem drucken','Abbrechen');
+  if(!ok)return false;}
  const fmt=n=>Number(n).toLocaleString('de-DE'),heute=new Date().toLocaleDateString('de-DE');
  let st=document.getElementById('seitenstil');if(!st){st=document.createElement('style');st.id='seitenstil';document.head.appendChild(st);}
  st.textContent=br.hoch?'@media print{@page{size:A5 portrait;margin:12mm}}':'';
