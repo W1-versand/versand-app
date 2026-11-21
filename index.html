@@ -73,20 +73,33 @@ input,select{width:100%;min-height:54px;padding:8px 12px;border:3px solid #cbd5e
 #timing,#raw,#ocrtext,#run,#lookup,#file,#camera,.tech{display:none!important}
 #druck{display:none}
 @media print{
- @page{size:A5 landscape;margin:11mm}
+ @page{size:A5 landscape;margin:8mm 12mm}
  html,body{height:auto;background:#fff;font:12px Arial,sans-serif;color:#000}
- main,#ueber{display:none!important}
+ main,#ueber,#sonderBox{display:none!important}
  #druck{display:block!important}
- #druck article{break-after:page;page-break-after:always}
- #druck article:last-child{break-after:auto;page-break-after:auto}
- #druck .head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #222;margin-bottom:10px}
- #druck .head div{text-align:right;line-height:1.5}
- #druck h1{font-size:20px;margin:0 0 10px}
- #druck p{margin:6px 0;font-size:13px}
- #druck table{width:100%;border-collapse:collapse;margin-top:12px}
- #druck td,#druck th{border:1px solid #888;padding:6px 9px;text-align:left;font-size:13px}
+ #druck article.ls{break-after:page;page-break-after:always}
+ #druck article.ls:last-child{break-after:auto;page-break-after:auto}
+ #druck .kopf{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;border-bottom:1.5px solid #000;padding-bottom:6px}
+ #druck .firma{font-size:19px;font-weight:bold;white-space:pre-line}
+ #druck .adr{text-align:right;font-size:12.5px;line-height:1.4;white-space:pre-line}
+ #druck .empf{display:flex;justify-content:space-between;gap:16px;margin-top:12px;min-height:84px}
+ #druck .empf .links{width:52%;font-size:16px;line-height:1.4;white-space:pre-line}
+ #druck .empf .rechts{width:44%;font-size:15px;line-height:1.5}
+ #druck .empf .rechts p{margin:0 0 4px}
+ #druck .werkzeile{margin-top:10px;font-weight:bold;font-size:16px}
+ #druck .sonderbox{border:3px solid #000;padding:8px 10px;font-size:14px;font-weight:bold}
+ #druck .lsz{margin-top:10px;display:flex;justify-content:space-between;align-items:baseline;font-size:19px;font-weight:bold}
+ #druck .lsz span{font-size:14px;font-weight:normal}
+ #druck table{width:100%;border-collapse:collapse;margin-top:10px}
+ #druck thead{display:table-header-group}
+ #druck tfoot{display:table-row-group}
+ #druck tr{page-break-inside:avoid}
+ #druck td,#druck th{border:1px solid #888;padding:3px 10px;text-align:left;font-size:14px}
  #druck th{background:#eee}
  #druck .num{text-align:right}
+ #druck .sammel .head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #222;margin-bottom:10px}
+ #druck .sammel .head div{text-align:right;line-height:1.5}
+ #druck .sammel h1{margin:0 0 10px}
  #druck .sammel{page:sammel;break-after:auto}
  #druck .sammel h1{font-size:22px}
 }
@@ -324,14 +337,20 @@ $('sonderZurueck').addEventListener('click',()=>{$('sonderBox').hidden=true;});
 $('sonderOk').addEventListener('click',()=>{const t=$('sonderText').value.trim();if(!t)return;$('sonderfrei').value=t.slice(0,60);$('sonder').value='Keine';$('sonderBox').hidden=true;window.w1SonderLabel();});
 /* Große Ja/Nein-Abfrage statt kleiner Browser-Fenster */
 function frage(text,ja,nein){return new Promise(res=>{$('ueberText').textContent=text;$('ueberJa').textContent=ja;$('ueberNein').textContent=nein||'';$('ueberNein').hidden=!nein;$('ueber').hidden=false;const zu=v=>{$('ueber').hidden=true;$('ueberJa').onclick=$('ueberNein').onclick=null;res(v);};$('ueberJa').onclick=()=>zu(true);$('ueberNein').onclick=()=>zu(false);});}
-function drucken(list){
+async function drucken(list){
  const g=gruppen(list.filter(p=>p.lieferschein));if(!g.size){frage('Keine Lieferscheine zum Drucken vorhanden.','OK');return false;}
- const fmt=n=>Number(n).toLocaleString('de-DE');
+ let br={};try{br=await call('w1Briefkopf');}catch(e){br=window.w1Brief||{};}
+ window.w1Brief=br;
+ const fmt=n=>Number(n).toLocaleString('de-DE'),heute=new Date().toLocaleDateString('de-DE');
+ let st=document.getElementById('seitenstil');if(!st){st=document.createElement('style');st.id='seitenstil';document.head.appendChild(st);}
+ st.textContent=br.hoch?'@media print{@page{size:A5 portrait;margin:12mm}}':'';
  $('druck').innerHTML=[...g].map(([no,rows])=>{const f=rows[0],werk=f.werk==='5113'?'Wagenfeld':'Diepholz',sum=rows.reduce((s,p)=>s+Number(p.menge),0);
-  const so=f.sonder&&f.sonder!=='Keine'?'<p style="border:3px solid #000;padding:8px 10px;font-size:16px;font-weight:bold">⚠ SONDERAUFGABE: '+esc(f.sonder)+'</p>':'';
-  return '<article><div class="head"><h1>Rücklieferschein W1</h1><div><strong>LS-Nr. '+esc(no)+'</strong><br>Datum: '+new Date().toLocaleDateString('de-DE')+'</div></div>'+
-  so+'<p><strong>Empfänger:</strong> Werk '+esc(f.werk)+' – '+werk+'</p><p><strong>Materialnummer:</strong> '+esc(f.material)+'</p><p><strong>Bezeichnung:</strong> '+esc(f.bezeichnung)+'</p><p><strong>Rahmenvertrag:</strong> '+esc(f.vertrag)+'</p>'+
-  '<table><thead><tr><th>Charge</th><th class="num">Stückzahl</th></tr></thead><tbody>'+rows.map(p=>'<tr><td>'+esc(p.charge)+'</td><td class="num">'+fmt(p.menge)+'</td></tr>').join('')+'</tbody><tfoot><tr><th>Gesamtstückzahl</th><th class="num">'+fmt(sum)+'</th></tr></tfoot></table></article>';}).join('');
+  const kunde=f.werk==='5113'?br.werk5113:br.werk5125;
+  const so=f.sonder&&f.sonder!=='Keine'?'<tr><th>Sonderaufgabe</th><th class="num">'+esc(f.sonder)+'</th></tr>':'';
+  return '<article class="ls"><div class="kopf"><div class="firma">'+esc(br.firma||'')+'</div><div class="adr">'+esc(br.adresse||'')+'</div></div>'+
+  '<div class="empf"><div class="links">'+esc(kunde||'')+'<div class="werkzeile">Werk '+esc(f.werk)+' – '+werk+'</div></div><div class="rechts"><p><strong>Materialnummer:</strong> '+esc(f.material)+'</p><p><strong>Bezeichnung:</strong> '+esc(f.bezeichnung)+'</p><p><strong>Rahmenvertrag:</strong> '+esc(f.vertrag)+'</p></div></div>'+
+  '<div class="lsz">Rücklieferschein Nr. '+esc(no)+'<span>Datum: '+heute+'</span></div>'+
+  '<table><thead><tr><th>Charge</th><th class="num">Stückzahl</th></tr></thead><tbody>'+rows.map(p=>'<tr><td>'+esc(p.charge)+'</td><td class="num">'+fmt(p.menge)+'</td></tr>').join('')+'</tbody><tfoot><tr><th>Gesamtstückzahl</th><th class="num">'+fmt(sum)+'</th></tr>'+so+'</tfoot></table></article>';}).join('');
  window.print();setTimeout(()=>{$('druck').innerHTML='';},1000);return true;}
 window.w1Drucken=drucken;
 $('sammel').addEventListener('click',async()=>{try{const d=await call('w1SammelHeute');const z=d.zeilen||[];if(!z.length){await frage('Heute wurden noch keine Lieferscheine abgeschlossen.','OK');return;}
@@ -343,10 +362,10 @@ $('sammel').addEventListener('click',async()=>{try{const d=await call('w1SammelH
 $('finish').addEventListener('click',async()=>{if(!hasData)return;const list=window.w1LastData.positionen;
  if(!await frage(list.length+' Palette(n) = '+gruppen(list).size+' Lieferschein(e) im Format A5 werden jetzt gedruckt.','✓ JA, DRUCKEN','ZURÜCK'))return;
  $('finish').disabled=true;status('⏳ Lieferscheine werden erstellt …');
- try{const d=await call('w1VersandAbschliessen');drucken(d.positionen||[]);await init();status('✓ Fertig. Nächster Begleitschein bitte.');}
+ try{const d=await call('w1VersandAbschliessen');await drucken(d.positionen||[]);await init();status('✓ Fertig. Nächster Begleitschein bitte.');}
  catch(e){status('');await frage('Abschließen nicht möglich: '+(e.message||e),'OK');}
  finally{$('finish').disabled=false;}});
-$('reprint').addEventListener('click',async()=>{try{const d=await call('w1VersandLetzterAbschluss');drucken(d.positionen||[]);}catch(e){await frage('Nicht möglich: '+(e.message||e),'OK');}});
+$('reprint').addEventListener('click',async()=>{try{const d=await call('w1VersandLetzterAbschluss');await drucken(d.positionen||[]);}catch(e){await frage('Nicht möglich: '+(e.message||e),'OK');}});
 init();
 })();
 </script>
