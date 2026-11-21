@@ -31,17 +31,107 @@
 
 
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f0f3f6;color:#142238;font:19px Arial,sans-serif}main{max-width:940px;margin:auto;padding:12px}section{background:white;border-radius:17px;padding:18px;margin:12px 0;box-shadow:0 1px 4px #0001}h1{font-size:27px;margin:6px 0 12px}h2{font-size:23px;margin:0 0 14px}.btn{width:100%;min-height:68px;display:flex;align-items:center;justify-content:center;text-align:center;border:0;border-radius:14px;padding:14px;background:#125aa5;color:#fff;font:bold 23px Arial;cursor:pointer;margin:10px 0}.secondary{background:#e5edf5;color:#174c80}.green{background:#147a3b}.red{background:#a91f29}.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}label{font-weight:700;font-size:17px}input,select{width:100%;min-height:56px;padding:12px;border:2px solid #cbd5e1;border-radius:10px;font:20px Arial;background:white;margin-top:5px}button:disabled{opacity:.5}.invalid{border:3px solid #c5222b!important;background:#fff0f0!important}.missing-note{color:#a51924;font-weight:bold}#preview{display:block;max-width:100%;max-height:240px;margin:8px auto}#preview[hidden],#cameraDialog[hidden]{display:none!important}.note{color:#546377;font-size:16px}#status{font-weight:700;color:#155b35}#hinweis{font-size:15px;color:#7b3b00;white-space:pre-wrap}#positionen{font-size:17px}#cameraDialog{position:fixed;inset:0;background:#0b1424;z-index:99;padding:12px;display:flex;flex-direction:column;gap:12px}#cameraVideo{width:100%;height:calc(100vh - 190px);object-fit:contain;background:black}#cameraDialog .btn{flex-shrink:0;margin:0}#cameraDialog .two{flex-shrink:0}#timing,#raw,#ocrtext,#run,#lookup,#file,#camera,.tech{display:none!important}.werklabel{font-size:22px}.intro{font-size:16px;color:#4b5563;margin:4px 0}.pill{background:#edf7ef;border-radius:12px;padding:12px;font-weight:bold}.compact{margin-top:4px}#speicherstatus{font-size:17px}#showphoto{font-size:14px;min-height:36px} .small-actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:8px 0}.small-actions .btn,.small-actions label{width:auto;min-height:38px;margin:0;padding:8px 12px;font:bold 14px Arial;border-radius:9px}.main-camera{min-height:105px;font-size:29px;background:#0756ae;box-shadow:0 4px 0 #073b73}.cancel-btn{background:#f8e9e9;color:#9b1c1c;border:1px solid #d9a4a4}#sonderfrei{margin-top:8px}@media(max-width:580px){.grid{grid-template-columns:1fr 1fr;gap:8px}.grid label{font-size:14px}.grid input{font-size:17px;padding:9px}.two{gap:8px}.btn{font-size:19px}section{padding:13px}h1{font-size:23px}}@media(min-width:800px){.grid{grid-template-columns:repeat(3,1fr)}}
-.gelb{background:#fff3a8!important;border:3px solid #e0a800!important}.gelbnote{background:#fff3a8;border-radius:10px;padding:8px 10px;color:#5c4300;font-weight:bold}</style></head><body><main>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:#eef2f6;color:#142238;font:22px Arial,sans-serif}
+[hidden]{display:none!important}
+main{height:100vh;height:100dvh;max-width:1100px;margin:0 auto;padding:10px 14px;display:flex;flex-direction:column;gap:10px;overflow:auto}
+h1{font-size:30px;margin:0}
+#status{font-size:24px;font-weight:700;color:#155b35;margin:0;min-height:32px}
+.screen{flex:1;display:flex;flex-direction:column;gap:12px;min-height:0}
+#screen2{display:none}
+body.has-result #screen1{display:none}
+body.has-result #screen2{display:flex}
+.btn{width:100%;display:flex;align-items:center;justify-content:center;text-align:center;border:0;border-radius:18px;padding:12px;background:#125aa5;color:#fff;font:bold 28px Arial;cursor:pointer;margin:0}
+.btn:disabled{opacity:.45}
+.main-camera{min-height:min(21vh,160px);font-size:36px;background:#0756ae;box-shadow:0 5px 0 #073b73}
+.green{background:#147a3b;box-shadow:0 5px 0 #0d5a2a}.red{background:#a91f29}.secondary{background:#e5edf5;color:#174c80;font-size:18px;min-height:50px;width:auto;padding:8px 16px;border-radius:12px}
+#finish{min-height:min(14vh,105px);font-size:30px}
+.pill{background:#edf7ef;border-radius:14px;padding:10px 14px;font-weight:bold;margin:0;font-size:21px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+label{font-weight:700;font-size:16px;display:block}
+input,select{width:100%;min-height:54px;padding:8px 12px;border:3px solid #cbd5e1;border-radius:12px;font:bold 25px Arial;background:#fff;margin-top:3px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.invalid{border:4px solid #c5222b!important;background:#fff0f0!important}
+.gelb{background:#fff3a8!important;border:4px solid #e0a800!important}
+#hinweis{font-size:17px;color:#7b3b00;margin:0;white-space:pre-wrap;max-height:84px;overflow:auto}
+.gelbnote{background:#fff3a8;border-radius:10px;padding:8px 10px;color:#5c4300;font-weight:bold}
+.missing-note{color:#a51924;font-weight:bold;font-size:18px;margin:0}
+#speicherstatus{font-size:20px;font-weight:bold;margin:0;color:#a51924;min-height:0}
+.werk{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.werk.invalid{outline:5px solid #c5222b;border-radius:20px}
+.werk button{min-height:min(15vh,125px);font:bold 32px Arial;border:5px solid #125aa5;background:#e5edf5;color:#125aa5;border-radius:18px;cursor:pointer}
+.werk button.on{background:#147a3b;color:#fff;border-color:#0d5a2a}
+.sonderbtn{min-height:62px;font-size:22px;background:#e5edf5;color:#174c80;border:3px dashed #9fb6cf;box-shadow:none}.sonderbtn.aktiv{background:#ffb74d;color:#3b1d00;border:3px solid #c77800;font-size:24px}
+#sonderBox{position:fixed;inset:0;background:#000b;z-index:60;display:flex;align-items:center;justify-content:center;padding:14px}#sonderBox .box{background:#fff;border-radius:22px;padding:20px;max-width:760px;width:100%;max-height:96vh;overflow:auto;display:flex;flex-direction:column;gap:12px}#sonderBox h2{margin:0;font-size:26px;text-align:center}#sonderBox .btn{min-height:78px;font-size:28px}#sonderBox input{font-size:28px;min-height:70px}
+.aktion{display:grid;grid-template-columns:2fr 1fr;gap:14px}
+.aktion .btn{min-height:min(15vh,125px);font-size:34px}
+#ueber{position:fixed;inset:0;background:#000b;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px}
+#ueber .box{background:#fff;border-radius:22px;padding:26px;max-width:760px;width:100%;display:flex;flex-direction:column;gap:16px}
+#ueber p{font-size:28px;font-weight:bold;margin:0;text-align:center}
+#ueber .btn{min-height:96px;font-size:30px}
+#timing,#raw,#ocrtext,#run,#lookup,#file,#camera,.tech{display:none!important}
+#druck{display:none}
+@media print{
+ @page{size:A5 landscape;margin:11mm}
+ html,body{height:auto;background:#fff;font:12px Arial,sans-serif;color:#000}
+ main,#ueber{display:none!important}
+ #druck{display:block!important}
+ #druck article{break-after:page;page-break-after:always}
+ #druck article:last-child{break-after:auto;page-break-after:auto}
+ #druck .head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #222;margin-bottom:10px}
+ #druck .head div{text-align:right;line-height:1.5}
+ #druck h1{font-size:20px;margin:0 0 10px}
+ #druck p{margin:6px 0;font-size:13px}
+ #druck table{width:100%;border-collapse:collapse;margin-top:12px}
+ #druck td,#druck th{border:1px solid #888;padding:6px 9px;text-align:left;font-size:13px}
+ #druck th{background:#eee}
+ #druck .num{text-align:right}
+ #druck .sammel{page:sammel;break-after:auto}
+ #druck .sammel h1{font-size:22px}
+}
+@page sammel{size:A4 portrait;margin:15mm}
+</style></head><body><main>
 <h1>📦 W1 – Versand</h1>
-<section><button type="button" class="btn main-camera" id="openCamera">📷 BEGLEITSCHEIN FOTOGRAFIEREN</button><div class="small-actions"><label class="btn secondary" for="file">Begleitschein-Bild auswählen</label><button class="btn secondary" id="showphoto" type="button" hidden>Foto anzeigen</button><button class="btn cancel-btn" id="cancelEntry" type="button">Abbrechen</button></div><input id="camera" type="file" accept="image/jpeg,image/png" capture="environment"><input id="file" type="file" accept="image/jpeg,image/png" style="position:absolute;opacity:0;width:1px;height:1px"><p id="status" role="status">Bereit für den nächsten Begleitschein.</p><img id="preview" hidden alt="Foto"><button id="run" disabled>Erkennung erneut starten</button></section>
-<section><h2>1. Angaben kontrollieren</h2><div class="grid"><label>Materialnummer<input id="material" inputmode="numeric" autocomplete="off" placeholder="000.000.000.000-00"></label><label>Kopfmaterial<input id="kopfmaterial" inputmode="numeric" autocomplete="off" placeholder="000.000.000.000-00"></label><label>Charge<input id="charge" autocomplete="off"></label><label>Stückzahl<input id="menge" inputmode="numeric" autocomplete="off"></label><label>Rahmenvertrag<input id="vertrag" autocomplete="off"></label><label>Bezeichnung<input id="bezeichnung" autocomplete="off"></label></div><p id="missing" class="missing-note" aria-live="polite"></p><p id="hinweis"></p><button id="lookup">Stammdaten erneut prüfen</button></section>
-<section><h2>2. Zielwerk wählen</h2><label class="werklabel">Wohin geht die Palette?<select id="werk"><option value="">BITTE WERK AUSWÄHLEN</option><option value="5113">5113 – WAGENFELD</option><option value="5125">5125 – DIEPHOLZ</option></select></label><label>Sonderaufgabe (nur bei Bedarf)<select id="sonder"><option>Keine</option><option>Zusätzliche Kontrolle</option><option>Nacharbeit</option><option>Sonderprüfung</option></select></label><label>Andere Sonderaufgabe<input id="sonderfrei" placeholder="Nur bei Bedarf"></label><p id="speicherstatus" class="note">Nach der Kontrolle nächste Palette fotografieren.</p><button class="btn green" id="save">✓ LETZTE PALETTE SPEICHERN</button></section>
-<section><h2>3. Versandübersicht</h2><p id="rundenstatus" class="pill">Wird geladen …</p><div id="positionen"></div><button class="btn" id="finish">✓ LIEFERSCHEINE ABSCHLIESSEN</button><button class="btn secondary" id="print" hidden>🖨 A5-LIEFERSCHEINE DRUCKEN</button><button class="btn secondary" id="newround">＋ NEUE VERSANDERFASSUNG</button></section>
+<p id="status" role="status">Bereit für den nächsten Begleitschein.</p>
+
+<div class="screen" id="screen1">
+ <button type="button" class="btn main-camera" id="openCamera">📷 BEGLEITSCHEIN FOTOGRAFIEREN</button>
+ <p id="rundenstatus" class="pill">Wird geladen …</p>
+ <button class="btn green" id="finish" hidden>✓ FERTIG – LIEFERSCHEINE DRUCKEN</button>
+ <div class="row"><button class="btn secondary" id="reprint" type="button">Letzte Lieferscheine nochmal drucken</button><button class="btn secondary" id="sammel" type="button">Sammellieferschein heute (ohne Preise)</button><label class="btn secondary" for="file" style="margin:0">Bild aus Datei auswählen</label></div>
+</div>
+
+<div class="screen" id="screen2">
+ <div class="grid">
+  <label>Materialnummer<input id="material" inputmode="numeric" autocomplete="off" placeholder="000.000.000.000-00"></label>
+  <label>Kopfmaterial<input id="kopfmaterial" inputmode="numeric" autocomplete="off" placeholder="000.000.000.000-00"></label>
+  <label>Bezeichnung<input id="bezeichnung" autocomplete="off"></label>
+  <label>Charge<input id="charge" autocomplete="off"></label>
+  <label>Stückzahl<input id="menge" inputmode="numeric" autocomplete="off"></label>
+  <label>Rahmenvertrag<input id="vertrag" autocomplete="off"></label>
+ </div>
+ <p id="missing" class="missing-note" aria-live="polite"></p>
+ <p id="hinweis"></p>
+ <div class="werk invalid" id="werkwahl"><button type="button" data-w="5113">5113<br>WAGENFELD</button><button type="button" data-w="5125">5125<br>DIEPHOLZ</button></div>
+ <button class="btn sonderbtn" id="sonderBtn" type="button">Sonderaufgabe (nur bei Bedarf): Keine</button>
+ <p id="speicherstatus"></p>
+ <div class="aktion"><button class="btn green" id="save" type="button">✓ SPEICHERN</button><button class="btn red" id="cancelEntry" type="button">ABBRECHEN</button></div>
+</div>
+
+<div style="display:none">
+ <select id="werk"><option value="">BITTE WERK AUSWÄHLEN</option><option value="5113">5113</option><option value="5125">5125</option></select>
+ <select id="sonder"><option>Keine</option></select><input id="sonderfrei">
+ <input id="camera" type="file" accept="image/jpeg,image/png"><input id="file" type="file" accept="image/jpeg,image/png">
+ <img id="preview" hidden alt=""><button id="showphoto" type="button" hidden></button><button id="run" disabled>x</button><button id="lookup">x</button>
+</div>
 <section class="tech"><pre id="timing"></pre><pre id="raw"></pre><pre id="ocrtext"></pre></section>
-</main><div id="cameraDialog" hidden><video id="cameraVideo" autoplay playsinline muted></video><div class="two"><button class="btn green" id="takePhoto">📷 FOTO AUFNEHMEN</button><button class="btn red" id="closeCamera">ABBRECHEN</button></div></div>
+</main>
+<div id="ueber" hidden><div class="box"><p id="ueberText"></p><button class="btn green" id="ueberJa"></button><button class="btn secondary" id="ueberNein" style="width:100%;font-size:24px;min-height:70px"></button></div></div>
+<div id="sonderBox" hidden><div class="box"><h2>Sonderaufgabe wählen</h2><div id="sonderListe" style="display:flex;flex-direction:column;gap:10px"></div><div id="sonderFrei" hidden style="display:flex;flex-direction:column;gap:10px"><input id="sonderText" maxlength="60" placeholder="Sonderaufgabe eintippen"><button class="btn green" id="sonderOk" type="button">✓ ÜBERNEHMEN</button></div><button class="btn secondary" id="sonderZurueck" type="button" style="width:100%;font-size:24px;min-height:70px">ZURÜCK</button></div></div>
+<div id="druck"></div>
 <script>
-(()=>{'use strict';const $=id=>document.getElementById(id);let selected=null,busy=false,lookupSerial=0,scanEpoch=0;const status=s=>$('status').textContent=s;
+(()=>{'use strict';const $=id=>document.getElementById(id);let selected=null,busy=false,lookupSerial=0,scanEpoch=0;const status=s=>{$('status').textContent=/^(Barcode|OCR|Materialnummer|Stammdaten|Foto wird|Tabelle|Suche)/.test(s)?'⏳ Bitte warten – der Schein wird gelesen …':s;};
 function loadScript(url){return new Promise((ok,fail)=>{const s=document.createElement('script');s.src=url;s.onload=ok;s.onerror=()=>fail(Error('Bibliothek konnte nicht geladen werden.'));document.head.appendChild(s);});}
 function fmtNr(v){const d=String(v||'').replace(/\D/g,'').slice(0,14);let o='';for(let i=0;i<d.length;i++){if(i===3||i===6||i===9)o+='.';if(i===12)o+='-';o+=d[i];}return o;}
 window.w1FmtNr=v=>{const d=String(v||'').replace(/\D/g,'');return d.length===14?fmtNr(d):String(v||'').trim();};
@@ -185,7 +275,7 @@ $('run').addEventListener('click',async()=>{
   }
   checkCancelled();
   if(!(r.M&&r.K)){const ids=['material','bezeichnung'];if(!r.K)ids.push('vertrag');if(!r.M)ids.push('kopfmaterial');gelb(ids);if(ids.some(i=>$(i).classList.contains('gelb')))gelbHinweis('GELB = nicht per Barcode gelesen, sondern aus der Tabelle oder per Texterkennung. Bitte gründlich mit dem Schein vergleichen. '+($('hinweis').textContent.startsWith('GELB')?'':$('hinweis').textContent));}
-  status('Erkennung fertig – Angaben kontrollieren und Werk wählen.');window.w1Pending=true;document.body.classList.add('has-result');window.scrollTo({top:0,behavior:'smooth'});
+  status('Bitte Angaben prüfen, Werk wählen und speichern.');window.w1Pending=true;document.body.classList.add('has-result');window.scrollTo({top:0,behavior:'smooth'});
  }catch(e){if(thisScan!==scanEpoch)return;window.w1Pending=true;status('Fehler: '+(e.message||e));$('hinweis').textContent='Bereits erkannte Felder bitte prüfen. Fehlende Werte können manuell ergänzt werden.';window.markFields();}
  finally{
   const gesamt=(performance.now()-t0)/1000;
@@ -196,47 +286,67 @@ $('run').addEventListener('click',async()=>{
 })();
 </script>
 <script>
-(()=>{'use strict';const $=id=>document.getElementById(id);let roundId=localStorage.getItem('w1_versand_test5_runde')||'',roundStatus='OFFEN',saving=false,hasData=false,pendingId='';window.w1Pending=false;
-function call(name,...args){return new Promise((ok,fail)=>{if(!window.google?.script?.run){fail(Error('Nur über die bereitgestellte Apps-Script-Web-App nutzbar.'));return;}google.script.run.withSuccessHandler(ok).withFailureHandler(fail)[name](...args);});}
+(()=>{'use strict';const $=id=>document.getElementById(id);let saving=false,hasData=false,pendingId='';window.w1Pending=false;
+const status=t=>{$('status').textContent=t;};
+function call(name,...args){return new Promise((ok,fail)=>{if(!window.google?.script?.run){fail(Error('Nur über die bereitgestellte Seite nutzbar.'));return;}google.script.run.withSuccessHandler(ok).withFailureHandler(fail)[name](...args);});}
 function val(id){return $(id).value.trim();}
 function normalMenge(v){const t=String(v??'').trim().replace(/\s+/g,'').replace(/^Q/i,'');return /^(?:[0-9]+|[1-9][0-9]{0,2}(?:\.[0-9]{3})+)$/.test(t)?t.replace(/\./g,''):t;}
-function markFields(){const labels={material:'Materialnummer',kopfmaterial:'Kopfmaterialnummer',charge:'Charge',menge:'Menge',vertrag:'Rahmenvertrag',bezeichnung:'Artikelbezeichnung',werk:'Zielwerk'};const missing=[];for(const [id,name] of Object.entries(labels)){const el=$(id);const value=id==='menge'?normalMenge(el.value):el.value.trim();const bad=!value||(id==='menge'&&(!/^\d+$/.test(value)||Number(value)<1));el.classList.toggle('invalid',bad);if(bad)missing.push(name);} $('missing').textContent=window.w1Pending&&missing.length?'Bitte ergänzen oder prüfen: '+missing.join(', '):'';return missing;}
+function markFields(){const labels={material:'Materialnummer',kopfmaterial:'Kopfmaterialnummer',charge:'Charge',menge:'Menge',vertrag:'Rahmenvertrag',bezeichnung:'Artikelbezeichnung',werk:'Zielwerk'};const missing=[];for(const [id,name] of Object.entries(labels)){const el=$(id);const value=id==='menge'?normalMenge(el.value):el.value.trim();const bad=!value||(id==='menge'&&(!/^\d+$/.test(value)||Number(value)<1));el.classList.toggle('invalid',bad);if(bad)missing.push(name);}$('werkwahl').classList.toggle('invalid',!$('werk').value);if(window.w1SonderLabel)window.w1SonderLabel();$('missing').textContent=window.w1Pending&&missing.length?'Bitte ergänzen oder prüfen: '+missing.join(', '):'';return missing;}
 window.markFields=markFields;
- for(const id of ['material','kopfmaterial','charge','menge','vertrag','bezeichnung','werk']){const el=$(id);el.addEventListener('input',markFields);el.addEventListener('change',markFields);}
-function current(){return {id:pendingId||(pendingId=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random())),material:window.w1FmtNr(val('material')),kopf:window.w1FmtNr(val('kopfmaterial')),charge:val('charge'),menge:normalMenge(val('menge')),vertrag:val('vertrag'),bezeichnung:val('bezeichnung'),werk:val('werk'),sonder:val('sonderfrei')||val('sonder')};}
-function validate(p){window.markFields();if(!p.werk)throw Error('Bitte das Zielwerk auswählen.');const NRX=/^\d{3}\.\d{3}\.\d{3}\.\d{3}-\d{2}$/;if(p.material&&!NRX.test(p.material))throw Error('Materialnummer unvollständig (14 Ziffern nötig): '+p.material);if(p.kopf&&!NRX.test(p.kopf))throw Error('Kopfmaterialnummer unvollständig (14 Ziffern nötig): '+p.kopf);for(const k of ['material','kopf','charge','menge','vertrag','bezeichnung'])if(!p[k])throw Error('Bitte fehlendes Feld ergänzen: '+k);if(!/^\d+$/.test(p.menge)||Number(p.menge)<1)throw Error('Ungültige Menge.');if(($('hinweis').textContent||'').includes('WARNUNG'))throw Error('Stammdatenwarnung erst klären.');}
+for(const id of ['material','kopfmaterial','charge','menge','vertrag','bezeichnung','werk']){const el=$(id);el.addEventListener('input',()=>{el.classList.remove('gelb');markFields();});el.addEventListener('change',markFields);}
+/* Große Werk-Knöpfe */
+for(const b of document.querySelectorAll('#werkwahl button'))b.addEventListener('click',()=>{$('werk').value=b.dataset.w;$('werk').dispatchEvent(new Event('change',{bubbles:true}));for(const x of document.querySelectorAll('#werkwahl button'))x.classList.toggle('on',x===b);$('speicherstatus').textContent='';markFields();});
+const werkReset=()=>{for(const x of document.querySelectorAll('#werkwahl button'))x.classList.remove('on');};
+$('cancelEntry').addEventListener('click',()=>{werkReset();$('speicherstatus').textContent='';markFields();});
+$('file').addEventListener('change',werkReset);$('camera').addEventListener('change',werkReset);
+function current(){return {id:pendingId||(pendingId=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random())),material:window.w1FmtNr(val('material')),kopf:window.w1FmtNr(val('kopfmaterial')),charge:val('charge'),menge:normalMenge(val('menge')),vertrag:val('vertrag'),bezeichnung:val('bezeichnung'),werk:val('werk'),sonder:val('sonderfrei')||val('sonder')||'Keine'};}
+function validate(p){markFields();if(!p.werk)throw Error('Bitte unten das Zielwerk wählen (5113 oder 5125).');const NRX=/^\d{3}\.\d{3}\.\d{3}\.\d{3}-\d{2}$/;if(p.material&&!NRX.test(p.material))throw Error('Materialnummer unvollständig (14 Ziffern nötig): '+p.material);if(p.kopf&&!NRX.test(p.kopf))throw Error('Kopfmaterialnummer unvollständig (14 Ziffern nötig): '+p.kopf);for(const [k,n] of [['material','Materialnummer'],['kopf','Kopfmaterial'],['charge','Charge'],['menge','Stückzahl'],['vertrag','Rahmenvertrag'],['bezeichnung','Bezeichnung']])if(!p[k])throw Error('Bitte ausfüllen: '+n);if(!/^\d+$/.test(p.menge)||Number(p.menge)<1)throw Error('Ungültige Stückzahl.');if(($('hinweis').textContent||'').includes('WARNUNG'))throw Error('Bitte zuerst die Warnung klären (Rahmenvertrag passt nicht zur Tabelle).');}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function render(data){roundStatus=data.runde?.status||'OFFEN';const list=data.positionen||[];hasData=list.length>0;const distinct=new Set(list.map(p=>JSON.stringify([p.werk,p.material,p.vertrag]))).size;$('rundenstatus').textContent=(roundStatus==='ABGESCHLOSSEN'?'Abgeschlossen':'In Bearbeitung')+' · '+list.length+' Palette(n) · '+distinct+' A5-Lieferschein(e)';const by={5113:list.filter(p=>p.werk==='5113'),5125:list.filter(p=>p.werk==='5125')};$('positionen').innerHTML=Object.entries(by).map(([w,items])=>'<h3>'+w+' – '+(w==='5113'?'Wagenfeld':'Diepholz')+' ('+items.length+')</h3>'+(!items.length?'<p class="note">Noch keine Position.</p>':items.map(p=>'<div style="border-bottom:1px solid #ddd;padding:9px 0">'+esc(p.material)+' · '+esc(p.menge)+' St. · Charge '+esc(p.charge)+(p.lieferschein?' · '+esc(p.lieferschein):'')+'<br><small>'+esc(p.bezeichnung)+' · '+esc(p.sonder)+'</small></div>').join(''))).join('');$('print').hidden=roundStatus!=='ABGESCHLOSSEN';$('finish').disabled=roundStatus!=='OFFEN'||!hasData;$('save').disabled=roundStatus!=='OFFEN';if(data.sonder?.length){const old=$('sonder').value;$('sonder').replaceChildren(...data.sonder.map(s=>new Option(s,s)));$('sonder').value=data.sonder.includes(old)?old:(data.sonder.includes('Keine')?'Keine':data.sonder[0]);}window.w1LastData=data;}
-async function init(){try{let d=roundId?await call('w1VersandLaden',roundId):null;if(!d?.runde||d.runde.status!=='OFFEN'){d=await call('w1VersandNeueRunde');roundId=d.runde.id;localStorage.setItem('w1_versand_test5_runde',roundId);}render(d);}catch(e){$('rundenstatus').textContent='Speicherung nicht erreichbar: '+(e.message||e);}}
+function gruppen(list){const g=new Map();for(const p of list){const k=p.lieferschein||JSON.stringify([p.werk,p.material,p.vertrag]);if(!g.has(k))g.set(k,[]);g.get(k).push(p);}return g;}
+function render(d){const list=d.positionen||[];hasData=list.length>0;window.w1LastData=d;
+ const a=list.filter(p=>p.werk==='5113').length,b=list.filter(p=>p.werk==='5125').length;
+ $('rundenstatus').innerHTML=hasData?'<b>'+list.length+' Palette(n) erfasst</b> · 5113 Wagenfeld: '+a+' · 5125 Diepholz: '+b+' · '+gruppen(list).size+' Lieferschein(e)':'Noch keine Palette erfasst.';
+ $('finish').hidden=!hasData;
+ if(d.sonder&&d.sonder.length){const alt=$('sonder').value;$('sonder').replaceChildren(...d.sonder.map(x=>new Option(x,x)));$('sonder').value=d.sonder.includes(alt)?alt:'Keine';}}
+async function init(){try{render(await call('w1VersandLaden'));}catch(e){$('rundenstatus').textContent='Speicherung nicht erreichbar: '+(e.message||e);}}
 window.w1HasPending=()=>window.w1Pending===true;
-window.w1SavePending=async()=>{if(!window.w1Pending)return;if(saving)throw Error('Speicherung läuft noch.');if(roundStatus!=='OFFEN')throw Error('Bitte neue Erfassungsrunde starten.');const p=current();validate(p);saving=true;$('speicherstatus').textContent='Speichere Position in Google Sheets …';try{const d=await call('w1VersandPositionSpeichern',roundId,p);render(d);window.w1Pending=false;pendingId='';$('speicherstatus').textContent='Position dauerhaft gespeichert.';window.markFields();}catch(e){$('speicherstatus').textContent='Speicherung fehlgeschlagen: '+(e.message||e);throw e;}finally{saving=false;}};
-$('save').addEventListener('click',async()=>{try{await window.w1SavePending();}catch(e){alert(e.message||e);}});
-$('finish').addEventListener('click',async()=>{if(window.w1Pending){try{await window.w1SavePending();}catch(e){alert('Abschluss nicht möglich: '+(e.message||e));return;}}if(!hasData||!confirm('Für jedes Material je Werk und Rahmenvertrag einen A5-Lieferschein erstellen? Jede Charge bleibt einzeln aufgeführt. Jetzt endgültig abschließen?'))return;try{render(await call('w1VersandAbschliessen',roundId));alert('Lieferscheine abgeschlossen. Jetzt A5 drucken.');}catch(e){alert('Abschluss fehlgeschlagen: '+(e.message||e));}});
-$('newround').addEventListener('click',async()=>{if(window.w1Pending){alert('Bitte aktuelle Position zuerst speichern oder abschließen.');return;}if(roundStatus==='OFFEN'&&hasData){alert('Bitte die aktuelle Erfassungsrunde zuerst abschließen.');return;}try{const d=await call('w1VersandNeueRunde');roundId=d.runde.id;localStorage.setItem('w1_versand_test5_runde',roundId);render(d);$('speicherstatus').textContent='Neue Erfassungsrunde gestartet.';}catch(e){alert(e.message||e);}});
-$('print').addEventListener('click',()=>{
- const d=window.w1LastData;if(!d||d.runde.status!=='ABGESCHLOSSEN')return;
- const groups=new Map();
- for(const p of d.positionen){
-  if(!p.lieferschein)continue;
-  if(!groups.has(p.lieferschein))groups.set(p.lieferschein,[]);
-  groups.get(p.lieferschein).push(p);
- }
- if(!groups.size){alert('Keine abgeschlossenen Lieferscheine vorhanden.');return;}
+window.w1SavePending=async()=>{if(!window.w1Pending)return;if(saving)throw Error('Speicherung läuft noch.');const p=current();validate(p);saving=true;$('save').disabled=true;$('speicherstatus').style.color='#155b35';$('speicherstatus').textContent='Speichere …';try{const d=await call('w1VersandPositionSpeichern',p);render(d);window.w1Pending=false;pendingId='';$('cancelEntry').click();status('✓ Palette gespeichert. Nächster Begleitschein bitte.');}catch(e){$('speicherstatus').style.color='#a51924';$('speicherstatus').textContent='Speichern fehlgeschlagen: '+(e.message||e);throw e;}finally{saving=false;$('save').disabled=false;}};
+$('save').addEventListener('click',async()=>{try{await window.w1SavePending();}catch(e){$('speicherstatus').style.color='#a51924';$('speicherstatus').textContent=e.message||String(e);}});
+/* Sonderaufgabe: nur ein Knopf; Standard ist "Keine" */
+function sonderAktuell(){return val('sonderfrei')||val('sonder')||'Keine';}
+window.w1SonderLabel=()=>{const v=sonderAktuell(),b=$('sonderBtn');b.textContent=v==='Keine'?'Sonderaufgabe (nur bei Bedarf): Keine':'⚠ Sonderaufgabe: '+v;b.classList.toggle('aktiv',v!=='Keine');};
+function sonderOeffnen(){const box=$('sonderListe');box.replaceChildren();$('sonderFrei').hidden=true;
+ for(const v of [...$('sonder').options].map(o=>o.value)){const b=document.createElement('button');b.type='button';b.className='btn'+(v==='Keine'?' secondary':'');b.textContent=v==='Keine'?'Keine Sonderaufgabe':v;b.style.cssText=v==='Keine'?'font-size:26px;min-height:78px;width:100%':'';b.onclick=()=>{$('sonder').value=v;$('sonderfrei').value='';$('sonderBox').hidden=true;window.w1SonderLabel();};box.appendChild(b);}
+ const o=document.createElement('button');o.type='button';o.className='btn secondary';o.style.cssText='font-size:26px;min-height:78px;width:100%';o.textContent='✎ Andere Sonderaufgabe eintippen …';o.onclick=()=>{$('sonderFrei').hidden=false;$('sonderText').value='';$('sonderText').focus();};box.appendChild(o);
+ $('sonderBox').hidden=false;}
+$('sonderBtn').addEventListener('click',sonderOeffnen);
+$('sonderZurueck').addEventListener('click',()=>{$('sonderBox').hidden=true;});
+$('sonderOk').addEventListener('click',()=>{const t=$('sonderText').value.trim();if(!t)return;$('sonderfrei').value=t.slice(0,60);$('sonder').value='Keine';$('sonderBox').hidden=true;window.w1SonderLabel();});
+/* Große Ja/Nein-Abfrage statt kleiner Browser-Fenster */
+function frage(text,ja,nein){return new Promise(res=>{$('ueberText').textContent=text;$('ueberJa').textContent=ja;$('ueberNein').textContent=nein||'';$('ueberNein').hidden=!nein;$('ueber').hidden=false;const zu=v=>{$('ueber').hidden=true;$('ueberJa').onclick=$('ueberNein').onclick=null;res(v);};$('ueberJa').onclick=()=>zu(true);$('ueberNein').onclick=()=>zu(false);});}
+function drucken(list){
+ const g=gruppen(list.filter(p=>p.lieferschein));if(!g.size){frage('Keine Lieferscheine zum Drucken vorhanden.','OK');return false;}
  const fmt=n=>Number(n).toLocaleString('de-DE');
- const body=[...groups].map(([no,rows])=>{
-  const first=rows[0],werk=first.werk==='5113'?'Wagenfeld':'Diepholz';
-  const chargeRows=rows.map(p=>'<tr><td>'+esc(p.charge)+'</td><td class="num">'+fmt(p.menge)+'</td></tr>').join('');
-  const sum=rows.reduce((s,p)=>s+Number(p.menge),0);
+ $('druck').innerHTML=[...g].map(([no,rows])=>{const f=rows[0],werk=f.werk==='5113'?'Wagenfeld':'Diepholz',sum=rows.reduce((s,p)=>s+Number(p.menge),0);
+  const so=f.sonder&&f.sonder!=='Keine'?'<p style="border:3px solid #000;padding:8px 10px;font-size:16px;font-weight:bold">⚠ SONDERAUFGABE: '+esc(f.sonder)+'</p>':'';
   return '<article><div class="head"><h1>Rücklieferschein W1</h1><div><strong>LS-Nr. '+esc(no)+'</strong><br>Datum: '+new Date().toLocaleDateString('de-DE')+'</div></div>'+
-   '<p><strong>Empfänger:</strong> Werk '+esc(first.werk)+' – '+werk+'</p>'+
-   '<p><strong>Materialnummer:</strong> '+esc(first.material)+'</p>'+
-   '<p><strong>Rahmenvertrag:</strong> '+esc(first.vertrag)+'</p>'+
-   '<table><thead><tr><th>Charge</th><th class="num">Stückzahl</th></tr></thead><tbody>'+chargeRows+'</tbody><tfoot><tr><th>Gesamtstückzahl</th><th class="num">'+fmt(sum)+'</th></tr></tfoot></table></article>';
- }).join('');
- const win=window.open('','_blank');if(!win){alert('Bitte Pop-ups für die Druckansicht erlauben.');return;}
- win.document.write('<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>W1 A5-Rücklieferscheine</title><style>@page{size:A5 landscape;margin:11mm}*{box-sizing:border-box}body{font:12px Arial,sans-serif;color:#222;margin:0}article{break-after:page;page-break-after:always}article:last-child{break-after:auto;page-break-after:auto}.head{display:flex;justify-content:space-between;align-items:start;border-bottom:2px solid #222;margin-bottom:10px}.head div{text-align:right;line-height:1.5}h1{font-size:20px;margin:0 0 10px}p{margin:7px 0}table{width:100%;border-collapse:collapse;margin-top:13px}td,th{border:1px solid #999;padding:6px 9px;text-align:left}th{background:#eee}.num{text-align:right}tfoot th{font-weight:bold}@media screen{body{max-width:850px;margin:25px auto;background:#eee}article{background:white;padding:20px;margin-bottom:20px;min-height:190px}}</style></head><body>'+body+'</body></html>');
- win.document.close();win.focus();
-});
+  so+'<p><strong>Empfänger:</strong> Werk '+esc(f.werk)+' – '+werk+'</p><p><strong>Materialnummer:</strong> '+esc(f.material)+'</p><p><strong>Bezeichnung:</strong> '+esc(f.bezeichnung)+'</p><p><strong>Rahmenvertrag:</strong> '+esc(f.vertrag)+'</p>'+
+  '<table><thead><tr><th>Charge</th><th class="num">Stückzahl</th></tr></thead><tbody>'+rows.map(p=>'<tr><td>'+esc(p.charge)+'</td><td class="num">'+fmt(p.menge)+'</td></tr>').join('')+'</tbody><tfoot><tr><th>Gesamtstückzahl</th><th class="num">'+fmt(sum)+'</th></tr></tfoot></table></article>';}).join('');
+ window.print();setTimeout(()=>{$('druck').innerHTML='';},1000);return true;}
+window.w1Drucken=drucken;
+$('sammel').addEventListener('click',async()=>{try{const d=await call('w1SammelHeute');const z=d.zeilen||[];if(!z.length){await frage('Heute wurden noch keine Lieferscheine abgeschlossen.','OK');return;}
+ const fmt=n=>Number(n).toLocaleString('de-DE'),dat=d.tag.slice(8,10)+'.'+d.tag.slice(5,7)+'.'+d.tag.slice(0,4);let gesamt=0;
+ const teile=['5113','5125'].map(w=>{const t=z.filter(x=>x.werk===w);if(!t.length)return '';const sum=t.reduce((s,x)=>s+x.menge,0);gesamt+=sum;
+  return '<h2 style="font-size:16px;margin:16px 0 4px">Werk '+w+' – '+(w==='5113'?'Wagenfeld':'Diepholz')+'</h2><table><thead><tr><th>Lieferschein</th><th>Materialnummer</th><th>Bezeichnung</th><th>Rahmenvertrag</th><th class="num">Menge</th></tr></thead><tbody>'+t.map(x=>'<tr><td>'+esc(x.nr)+'</td><td>'+esc(x.material)+'</td><td>'+esc(x.bezeichnung)+'</td><td>'+esc(x.vertrag)+'</td><td class="num">'+fmt(x.menge)+'</td></tr>').join('')+'</tbody><tfoot><tr><th colspan="4">Summe Werk '+w+'</th><th class="num">'+fmt(sum)+'</th></tr></tfoot></table>';}).join('');
+ $('druck').innerHTML='<article class="sammel"><div class="head"><h1>Sammellieferschein W1</h1><div>Datum: '+dat+'</div></div>'+teile+'<p style="margin-top:14px"><strong>Gesamtmenge: '+fmt(gesamt)+'</strong></p></article>';
+ window.print();setTimeout(()=>{$('druck').innerHTML='';},1000);}catch(e){await frage('Nicht möglich: '+(e.message||e),'OK');}});
+$('finish').addEventListener('click',async()=>{if(!hasData)return;const list=window.w1LastData.positionen;
+ if(!await frage(list.length+' Palette(n) = '+gruppen(list).size+' Lieferschein(e) im Format A5 werden jetzt gedruckt.','✓ JA, DRUCKEN','ZURÜCK'))return;
+ $('finish').disabled=true;status('⏳ Lieferscheine werden erstellt …');
+ try{const d=await call('w1VersandAbschliessen');drucken(d.positionen||[]);await init();status('✓ Fertig. Nächster Begleitschein bitte.');}
+ catch(e){status('');await frage('Abschließen nicht möglich: '+(e.message||e),'OK');}
+ finally{$('finish').disabled=false;}});
+$('reprint').addEventListener('click',async()=>{try{const d=await call('w1VersandLetzterAbschluss');drucken(d.positionen||[]);}catch(e){await frage('Nicht möglich: '+(e.message||e),'OK');}});
 init();
 })();
 </script>
@@ -249,13 +359,13 @@ let stream=null,track=null,startet=false;
 const alt=$('openCamera'),btn=alt.cloneNode(true);alt.replaceWith(btn);
 const video=document.createElement('video');
 video.autoplay=true;video.muted=true;video.playsInline=true;
-video.style.cssText='display:none;width:100%;max-height:260px;background:#000;border-radius:12px;object-fit:contain';
+video.style.cssText='display:none;width:100%;flex:1 1 auto;min-height:120px;max-height:48vh;background:#000;border-radius:14px;object-fit:contain';
 btn.before(video);
 const wahl=document.createElement('select');
 wahl.style.cssText='display:none;min-height:38px;font:14px Arial;margin:6px 0';
 btn.after(wahl);
 const info=document.createElement('p');
-info.style.cssText='font-size:14px;color:#546377;margin:2px 0';
+info.style.cssText='font-size:14px;color:#546377;margin:2px 0;display:'+(/test/.test(location.hash)?'block':'none');
 $('status').after(info);
 if(/kamera/.test(location.hash))wahl.style.display='block';
 if(/test/.test(location.hash)){
@@ -279,7 +389,7 @@ async function starten(){
   const liste=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput');
   wahl.replaceChildren(...liste.map((d,i)=>new Option(d.label||('Kamera '+(i+1)),d.deviceId)));
   const gemerkt=localStorage.getItem('w1_kamera')||'';
-  const ziel=liste.find(d=>d.deviceId===gemerkt)||liste.find(d=>d.label.includes(BEVORZUGT));
+  const ziel=liste.find(d=>d.deviceId===gemerkt)||liste.find(d=>/jourist|ds130|document|dokument/i.test(d.label))||liste.find(d=>d.label.includes(BEVORZUGT));
   if(ziel&&ziel.deviceId!==track.getSettings().deviceId){stoppen();await oeffnen(ziel.deviceId);}
   wahl.value=track.getSettings().deviceId;
  }catch(e){stoppen();meldung('Kamera konnte nicht gestartet werden ('+(e.name||'Fehler')+'). Bitte „Begleitschein-Bild auswählen“ nutzen.');}
@@ -312,9 +422,6 @@ btn.addEventListener('click',async()=>{
  const t=new DataTransfer();t.items.add(file);
  const eingabe=$('camera');eingabe.files=t.files;eingabe.dispatchEvent(new Event('change',{bubbles:true}));
 });
-/* Foto nach dem Speichern der Position aus der Anzeige entfernen. */
-const speichern=window.w1SavePending;
-if(speichern)window.w1SavePending=async(...a)=>{const r=await speichern(...a);$('preview').removeAttribute('src');$('preview').hidden=true;$('showphoto').hidden=true;return r;};
 starten();
 })();
 </script>
