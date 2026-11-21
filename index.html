@@ -73,7 +73,7 @@ input,select{width:100%;min-height:54px;padding:8px 12px;border:3px solid #cbd5e
 #timing,#raw,#ocrtext,#run,#lookup,#file,#camera,.tech{display:none!important}
 #druck{display:none}
 @media print{
- @page{size:A5 landscape;margin:8mm 12mm}
+ @page{size:A5 landscape;margin:0}
  html,body{height:auto;background:#fff;font:12px Arial,sans-serif;color:#000}
  main,#ueber,#sonderBox{display:none!important}
  #druck{display:block!important}
@@ -90,12 +90,17 @@ input,select{width:100%;min-height:54px;padding:8px 12px;border:3px solid #cbd5e
  #druck .sonderbox{border:3px solid #000;padding:8px 10px;font-size:14px;font-weight:bold}
  #druck .lsz{margin-top:10px;display:flex;justify-content:space-between;align-items:baseline;font-size:19px;font-weight:bold}
  #druck .lsz span{font-size:14px;font-weight:normal}
- #druck table{width:100%;border-collapse:collapse;margin-top:10px}
- #druck thead{display:table-header-group}
- #druck tfoot{display:table-row-group}
- #druck tr{page-break-inside:avoid}
- #druck td,#druck th{border:1px solid #888;padding:3px 10px;text-align:left;font-size:14px}
- #druck th{background:#eee}
+ #druck table.rahmen{width:100%;border-collapse:collapse}
+ #druck table.rahmen>thead>tr>td>div,#druck table.rahmen>tfoot>tr>td>div{height:8mm}
+ #druck table.rahmen>thead{display:table-header-group}
+ #druck table.rahmen>tfoot{display:table-footer-group}
+ #druck td.inhalt{padding:0 12mm}
+ #druck table.pos{width:100%;border-collapse:collapse;margin-top:10px}
+ #druck table.pos thead{display:table-header-group}
+ #druck table.pos tfoot{display:table-row-group}
+ #druck table.pos tr{page-break-inside:avoid}
+ #druck table.pos td,#druck table.pos th{border:1px solid #888;padding:3px 10px;text-align:left;font-size:14px}
+ #druck table.pos th{background:#eee}
  #druck .num{text-align:right}
  #druck .sammel .head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #222;margin-bottom:10px}
  #druck .sammel .head div{text-align:right;line-height:1.5}
@@ -103,7 +108,7 @@ input,select{width:100%;min-height:54px;padding:8px 12px;border:3px solid #cbd5e
  #druck .sammel{page:sammel;break-after:auto}
  #druck .sammel h1{font-size:22px}
 }
-@page sammel{size:A4 portrait;margin:15mm}
+@page sammel{size:A4 portrait;margin:0}
 </style></head><body><main>
 <h1>📦 W1 – Versand</h1>
 <p id="status" role="status">Bereit für den nächsten Begleitschein.</p>
@@ -112,7 +117,7 @@ input,select{width:100%;min-height:54px;padding:8px 12px;border:3px solid #cbd5e
  <button type="button" class="btn main-camera" id="openCamera">📷 BEGLEITSCHEIN FOTOGRAFIEREN</button>
  <p id="rundenstatus" class="pill">Wird geladen …</p>
  <button class="btn green" id="finish" hidden>✓ FERTIG – LIEFERSCHEINE DRUCKEN</button>
- <p style="margin:0;font-size:13px;color:#8a97a8">Version 21.11.2026 – Tabellen-Ersatz gelb</p>
+ <p style="margin:0;font-size:13px;color:#8a97a8">Version 21.11.2026 – ohne Browser-Fußzeile</p>
  <div class="row"><button class="btn secondary" id="reprint" type="button">Letzte Lieferscheine nochmal drucken</button><button class="btn secondary" id="sammel" type="button">Sammellieferschein heute (ohne Preise)</button><label class="btn secondary" for="file" style="margin:0">Bild aus Datei auswählen</label></div>
 </div>
 
@@ -347,22 +352,22 @@ async function drucken(list){
   if(!ok)return false;}
  const fmt=n=>Number(n).toLocaleString('de-DE'),heute=new Date().toLocaleDateString('de-DE');
  let st=document.getElementById('seitenstil');if(!st){st=document.createElement('style');st.id='seitenstil';document.head.appendChild(st);}
- st.textContent=br.hoch?'@media print{@page{size:A5 portrait;margin:12mm}}':'';
+ st.textContent=br.hoch?'@media print{@page{size:A5 portrait;margin:0}}':'';
  $('druck').innerHTML=[...g].map(([no,rows])=>{const f=rows[0],werk=f.werk==='5113'?'Wagenfeld':'Diepholz',sum=rows.reduce((s,p)=>s+Number(p.menge),0);
   const kunde=f.werk==='5113'?br.werk5113:br.werk5125;
   const so=f.sonder&&f.sonder!=='Keine'?'<tr><th>Sonderaufgabe</th><th class="num">'+esc(f.sonder)+'</th></tr>':'';
-  return '<article class="ls"><div class="kopf"><div class="firma">'+esc(br.firma||'')+'</div><div class="adr">'+esc(br.adresse||'')+'</div></div>'+
+  return '<article class="ls"><table class="rahmen"><thead><tr><td><div></div></td></tr></thead><tfoot><tr><td><div></div></td></tr></tfoot><tbody><tr><td class="inhalt"><div class="kopf"><div class="firma">'+esc(br.firma||'')+'</div><div class="adr">'+esc(br.adresse||'')+'</div></div>'+
   '<div class="empf"><div class="links">'+esc(kunde||'')+'<div class="werkzeile">Werk '+esc(f.werk)+' – '+werk+'</div></div><div class="rechts"><p><strong>Materialnummer:</strong> '+esc(f.material)+'</p><p><strong>Bezeichnung:</strong> '+esc(f.bezeichnung)+'</p><p><strong>Rahmenvertrag:</strong> '+esc(f.vertrag)+'</p></div></div>'+
   '<div class="lsz">Rücklieferschein Nr. '+esc(no)+'<span>Datum: '+heute+'</span></div>'+
-  '<table><thead><tr><th>Charge</th><th class="num">Stückzahl</th></tr></thead><tbody>'+rows.map(p=>'<tr><td>'+esc(p.charge)+'</td><td class="num">'+fmt(p.menge)+'</td></tr>').join('')+'</tbody><tfoot><tr><th>Gesamtstückzahl</th><th class="num">'+fmt(sum)+'</th></tr>'+so+'</tfoot></table></article>';}).join('');
- window.print();setTimeout(()=>{$('druck').innerHTML='';},1000);return true;}
+  '<table class="pos"><thead><tr><th>Charge</th><th class="num">Stückzahl</th></tr></thead><tbody>'+rows.map(p=>'<tr><td>'+esc(p.charge)+'</td><td class="num">'+fmt(p.menge)+'</td></tr>').join('')+'</tbody><tfoot><tr><th>Gesamtstückzahl</th><th class="num">'+fmt(sum)+'</th></tr>'+so+'</tfoot></table></td></tr></tbody></table></article>';}).join('');
+ const t0=document.title;document.title='Lieferschein';window.print();document.title=t0;setTimeout(()=>{$('druck').innerHTML='';},1000);return true;}
 window.w1Drucken=drucken;
 $('sammel').addEventListener('click',async()=>{try{const d=await call('w1SammelHeute');const z=d.zeilen||[];if(!z.length){await frage('Heute wurden noch keine Lieferscheine abgeschlossen.','OK');return;}
  const fmt=n=>Number(n).toLocaleString('de-DE'),dat=d.tag.slice(8,10)+'.'+d.tag.slice(5,7)+'.'+d.tag.slice(0,4);let gesamt=0;
  const teile=['5113','5125'].map(w=>{const t=z.filter(x=>x.werk===w);if(!t.length)return '';const sum=t.reduce((s,x)=>s+x.menge,0);gesamt+=sum;
-  return '<h2 style="font-size:16px;margin:16px 0 4px">Werk '+w+' – '+(w==='5113'?'Wagenfeld':'Diepholz')+'</h2><table><thead><tr><th>Lieferschein</th><th>Materialnummer</th><th>Bezeichnung</th><th>Rahmenvertrag</th><th class="num">Menge</th></tr></thead><tbody>'+t.map(x=>'<tr><td>'+esc(x.nr)+'</td><td>'+esc(x.material)+'</td><td>'+esc(x.bezeichnung)+'</td><td>'+esc(x.vertrag)+'</td><td class="num">'+fmt(x.menge)+'</td></tr>').join('')+'</tbody><tfoot><tr><th colspan="4">Summe Werk '+w+'</th><th class="num">'+fmt(sum)+'</th></tr></tfoot></table>';}).join('');
- $('druck').innerHTML='<article class="sammel"><div class="head"><h1>Sammellieferschein W1</h1><div>Datum: '+dat+'</div></div>'+teile+'<p style="margin-top:14px"><strong>Gesamtmenge: '+fmt(gesamt)+'</strong></p></article>';
- window.print();setTimeout(()=>{$('druck').innerHTML='';},1000);}catch(e){await frage('Nicht möglich: '+(e.message||e),'OK');}});
+  return '<h2 style="font-size:16px;margin:16px 0 4px">Werk '+w+' – '+(w==='5113'?'Wagenfeld':'Diepholz')+'</h2><table class="pos"><thead><tr><th>Lieferschein</th><th>Materialnummer</th><th>Bezeichnung</th><th>Rahmenvertrag</th><th class="num">Menge</th></tr></thead><tbody>'+t.map(x=>'<tr><td>'+esc(x.nr)+'</td><td>'+esc(x.material)+'</td><td>'+esc(x.bezeichnung)+'</td><td>'+esc(x.vertrag)+'</td><td class="num">'+fmt(x.menge)+'</td></tr>').join('')+'</tbody><tfoot><tr><th colspan="4">Summe Werk '+w+'</th><th class="num">'+fmt(sum)+'</th></tr></tfoot></table>';}).join('');
+ $('druck').innerHTML='<article class="sammel"><table class="rahmen"><thead><tr><td><div></div></td></tr></thead><tfoot><tr><td><div></div></td></tr></tfoot><tbody><tr><td class="inhalt"><div class="head"><h1>Sammellieferschein W1</h1><div>Datum: '+dat+'</div></div>'+teile+'<p style="margin-top:14px"><strong>Gesamtmenge: '+fmt(gesamt)+'</strong></p></td></tr></tbody></table></article>';
+ const t0=document.title;document.title='Sammellieferschein';window.print();document.title=t0;setTimeout(()=>{$('druck').innerHTML='';},1000);}catch(e){await frage('Nicht möglich: '+(e.message||e),'OK');}});
 $('finish').addEventListener('click',async()=>{if(!hasData)return;const list=window.w1LastData.positionen;
  if(!await frage(list.length+' Palette(n) = '+gruppen(list).size+' Lieferschein(e) im Format A5 werden jetzt gedruckt.','✓ JA, DRUCKEN','ZURÜCK'))return;
  $('finish').disabled=true;status('⏳ Lieferscheine werden erstellt …');
