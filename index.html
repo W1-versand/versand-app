@@ -165,7 +165,17 @@ input,select{width:100%;min-height:54px;padding:8px 12px;border:3px solid #cbd5e
 <div id="w1Keyboard" hidden aria-label="Eingabetastatur"><div class="panel"><div id="w1KbTitle" class="heading">Eingabe</div><div id="w1KbDisplay" class="display" aria-live="polite"></div><div id="w1KbKeys" class="keys"></div><button type="button" id="w1KbDone" class="done">✓ FERTIG</button></div></div>
 
 <script>
-(()=>{'use strict';const $=id=>document.getElementById(id);let selected=null,busy=false,lookupSerial=0,scanEpoch=0;const status=s=>{$('status').textContent=/^(Barcode|OCR|Materialnummer|Stammdaten|Foto wird|Tabelle|Suche)/.test(s)?'⏳ Bitte warten – der Schein wird gelesen …':s;};
+(()=>{'use strict';const $=id=>document.getElementById(id);let selected=null,busy=false,lookupSerial=0,scanEpoch=0;
+// Foto nur auf Wunsch ansehen: kleiner Button auf der Kontrollseite.
+const fotoZeile=document.createElement('div');
+fotoZeile.style.cssText='display:flex;justify-content:flex-end;align-items:center;gap:8px;margin:0';
+const fotoBtn=$('showphoto'),fotoBild=$('preview');
+fotoBtn.style.cssText='display:inline-flex;width:auto;min-height:34px;padding:5px 10px;font:14px Arial;background:#e5edf5;color:#174c80;border:0;border-radius:8px';
+fotoBild.style.cssText='display:block;max-width:100%;max-height:48vh;object-fit:contain;margin:5px auto';
+fotoZeile.appendChild(fotoBtn);
+$('screen2').insertBefore(fotoZeile,$('screen2').firstChild);
+$('screen2').insertBefore(fotoBild,fotoZeile.nextSibling);
+const status=s=>{$('status').textContent=/^(Barcode|OCR|Materialnummer|Stammdaten|Foto wird|Tabelle|Suche)/.test(s)?'⏳ Bitte warten – der Schein wird gelesen …':s;};
 function loadScript(url){return new Promise((ok,fail)=>{const s=document.createElement('script');s.src=url;s.onload=ok;s.onerror=()=>fail(Error('Bibliothek konnte nicht geladen werden.'));document.head.appendChild(s);});}
 function fmtNr(v){const d=String(v||'').replace(/\D/g,'').slice(0,14);let o='';for(let i=0;i<d.length;i++){if(i===3||i===6||i===9)o+='.';if(i===12)o+='-';o+=d[i];}return o;}
 window.w1FmtNr=v=>{const d=String(v||'').replace(/\D/g,'');return d.length===14?fmtNr(d):String(v||'').trim();};
@@ -402,7 +412,7 @@ let stream=null,track=null,startet=false;
 const alt=$('openCamera'),btn=alt.cloneNode(true);alt.replaceWith(btn);
 const video=document.createElement('video');
 video.autoplay=true;video.muted=true;video.playsInline=true;
-video.style.cssText='display:none;width:100%;flex:1 1 auto;min-height:120px;max-height:48vh;background:#000;border-radius:14px;object-fit:contain';
+video.style.cssText='position:fixed;left:-10000px;top:0;width:2px;height:2px;opacity:0;pointer-events:none';
 btn.before(video);
 const wahl=document.createElement('select');
 wahl.style.cssText='display:none;min-height:38px;font:14px Arial;margin:6px 0';
@@ -422,7 +432,7 @@ async function oeffnen(id){
  if(id)v.deviceId={exact:id};
  stream=await navigator.mediaDevices.getUserMedia({video:v,audio:false});
  track=stream.getVideoTracks()[0];
- video.srcObject=stream;video.style.display='block';await video.play();
+ video.srcObject=stream;await video.play();
  try{await track.applyConstraints({advanced:[{focusMode:'continuous'}]});}catch(e){}
 }
 async function starten(){
