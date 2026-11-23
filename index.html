@@ -146,6 +146,7 @@ input,select{width:100%;min-height:54px;padding:8px 12px;border:3px solid #cbd5e
  <p id="missing" class="missing-note" aria-live="polite"></p>
  <p id="hinweis"></p>
  <div class="werk invalid" id="werkwahl"><button type="button" data-w="5113">5113<br>WAGENFELD</button><button type="button" data-w="5125">5125<br>DIEPHOLZ</button></div>
+ <button class="btn" id="direktVersand" type="button" aria-pressed="false" style="min-height:74px;font-size:25px;background:#e5edf5;color:#174c80;border:3px solid #9fb6cf">📦 VERSAND</button>
  <button class="btn sonderbtn" id="sonderBtn" type="button">Sonderaufgabe (nur bei Bedarf): Keine</button>
  <p id="speicherstatus"></p>
  <div class="aktion"><button class="btn green" id="save" type="button">✓ SPEICHERN</button><button class="btn red" id="cancelEntry" type="button">ABBRECHEN</button></div>
@@ -162,7 +163,7 @@ input,select{width:100%;min-height:54px;padding:8px 12px;border:3px solid #cbd5e
 <div id="ueber" hidden><div class="box"><p id="ueberText"></p><button class="btn green" id="ueberJa"></button><button class="btn secondary" id="ueberNein" style="width:100%;font-size:24px;min-height:70px"></button></div></div>
 <div id="sonderBox" hidden><div class="box"><h2>Sonderaufgabe wählen</h2><div id="sonderListe" style="display:flex;flex-direction:column;gap:10px"></div><div id="sonderFrei" hidden style="display:flex;flex-direction:column;gap:10px"><input id="sonderText" maxlength="60" placeholder="Sonderaufgabe eintippen"><button class="btn green" id="sonderOk" type="button">✓ ÜBERNEHMEN</button></div><button class="btn secondary" id="sonderZurueck" type="button" style="width:100%;font-size:24px;min-height:70px">ZURÜCK</button></div></div>
 <div id="druck"></div>
-<div id="w1Keyboard" hidden aria-label="Eingabetastatur"><div class="panel"><div id="w1KbTitle" class="heading">Eingabe</div><div id="w1KbDisplay" class="display" aria-live="polite"></div><div id="w1KbKeys" class="keys"></div><button type="button" id="w1KbDone" class="done">✓ FERTIG</button></div></div>
+<div id="w1Keyboard" hidden aria-label="Eingabetastatur"><div class="panel"><div id="w1KbTitle" class="heading">Eingabe</div><div id="w1KbDisplay" class="display" aria-live="polite"></div><div id="w1KbKeys" class="keys"></div><div style="display:grid;grid-template-columns:1fr 2fr;gap:10px;margin-top:10px"><button type="button" id="w1KbBack" class="done" style="background:#e5edf5;color:#174c80;font-size:21px">↩ ZURÜCK</button><button type="button" id="w1KbDone" class="done" style="margin-top:0">✓ ÜBERNEHMEN</button></div></div></div>
 
 <script>
 (()=>{'use strict';const $=id=>document.getElementById(id);let selected=null,busy=false,lookupSerial=0,scanEpoch=0;
@@ -341,12 +342,16 @@ for(const id of ['material','kopfmaterial','charge','menge','vertrag','bezeichnu
 /* Große Werk-Knöpfe */
 for(const b of document.querySelectorAll('#werkwahl button'))b.addEventListener('click',()=>{$('werk').value=b.dataset.w;$('werk').dispatchEvent(new Event('change',{bubbles:true}));for(const x of document.querySelectorAll('#werkwahl button'))x.classList.toggle('on',x===b);$('speicherstatus').textContent='';markFields();});
 const werkReset=()=>{for(const x of document.querySelectorAll('#werkwahl button'))x.classList.remove('on');};
-$('cancelEntry').addEventListener('click',()=>{werkReset();$('speicherstatus').textContent='';markFields();});
+const direktBtn=$('direktVersand');
+direktBtn.addEventListener('click',()=>{const on=direktBtn.getAttribute('aria-pressed')!=='true';direktBtn.setAttribute('aria-pressed',String(on));direktBtn.textContent=on?'✓ VERSAND':'📦 VERSAND';direktBtn.style.background=on?'#147a3b':'#e5edf5';direktBtn.style.color=on?'white':'#174c80';});
+function direktReset(){direktBtn.setAttribute('aria-pressed','false');direktBtn.textContent='📦 VERSAND';direktBtn.style.background='#e5edf5';direktBtn.style.color='#174c80';}
+$('cancelEntry').addEventListener('click',()=>{direktReset();werkReset();$('speicherstatus').textContent='';markFields();});
 $('file').addEventListener('change',werkReset);$('camera').addEventListener('change',werkReset);
-function current(){return {id:pendingId||(pendingId=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random())),material:window.w1FmtNr(val('material')),kopf:window.w1FmtNr(val('kopfmaterial')),charge:val('charge'),menge:normalMenge(val('menge')),vertrag:val('vertrag'),bezeichnung:val('bezeichnung'),werk:val('werk'),sonder:val('sonderfrei')||val('sonder')||'Keine'};}
+function w1SonderWert(){return val('sonderfrei')||val('sonder')||'Keine';}
+function current(){return {id:pendingId||(pendingId=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random())),material:window.w1FmtNr(val('material')),kopf:window.w1FmtNr(val('kopfmaterial')),charge:val('charge'),menge:normalMenge(val('menge')),vertrag:val('vertrag'),bezeichnung:val('bezeichnung'),werk:val('werk'),sonder:w1SonderWert(),direktversand:direktBtn.getAttribute('aria-pressed')==='true'};}
 function validate(p){markFields();if(!p.werk)throw Error('Bitte unten das Zielwerk wählen (5113 oder 5125).');const NRX=/^\d{3}\.\d{3}\.\d{3}\.\d{3}-\d{2}$/;if(p.material&&!NRX.test(p.material))throw Error('Materialnummer unvollständig (14 Ziffern nötig): '+p.material);if(p.kopf&&!NRX.test(p.kopf))throw Error('Kopfmaterialnummer unvollständig (14 Ziffern nötig): '+p.kopf);for(const [k,n] of [['material','Materialnummer'],['kopf','Kopfmaterial'],['charge','Charge'],['menge','Stückzahl'],['vertrag','Rahmenvertrag'],['bezeichnung','Bezeichnung']])if(!p[k])throw Error('Bitte ausfüllen: '+n);if(!/^\d+$/.test(p.menge)||Number(p.menge)<1)throw Error('Ungültige Stückzahl.');if(($('hinweis').textContent||'').includes('WARNUNG'))throw Error('Bitte zuerst die Warnung klären (Rahmenvertrag passt nicht zur Tabelle).');}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function gruppen(list){const g=new Map();for(const p of list){const k=p.lieferschein||JSON.stringify([p.werk,p.material,p.vertrag]);if(!g.has(k))g.set(k,[]);g.get(k).push(p);}return g;}
+function gruppen(list){const g=new Map();for(const p of list){const k=p.lieferschein||JSON.stringify([p.werk,p.material,p.vertrag,p.sonder,p.direktversand]);if(!g.has(k))g.set(k,[]);g.get(k).push(p);}return g;}
 function render(d){const list=d.positionen||[];hasData=list.length>0;window.w1LastData=d;
  const a=list.filter(p=>p.werk==='5113').length,b=list.filter(p=>p.werk==='5125').length;
  $('rundenstatus').innerHTML=hasData?'<b>'+list.length+' Palette(n) erfasst</b> · 5113 Wagenfeld: '+a+' · 5125 Diepholz: '+b+' · '+gruppen(list).size+' Lieferschein(e)':'Noch keine Palette erfasst.';
@@ -380,10 +385,13 @@ async function drucken(list){
  st.textContent=br.hoch?'@media print{@page{size:A5 portrait;margin:0}}':'';
  $('druck').innerHTML=[...g].map(([no,rows])=>{const f=rows[0],werk=f.werk==='5113'?'Wagenfeld':'Diepholz',sum=rows.reduce((s,p)=>s+Number(p.menge),0);
   const kunde=f.werk==='5113'?br.werk5113:br.werk5125;
-  const so=f.sonder&&f.sonder!=='Keine'?'<tr><th>Sonderaufgabe</th><th class="num">'+esc(f.sonder)+'</th></tr>':'';
+  const direkt=rows.some(p=>p.direktversand===true || String(p.sonder||'').includes('DIREKT IN DEN VERSAND'));
+   const rest=String(f.sonder||'').replace('DIREKT IN DEN VERSAND','').replace(/^\s*\|\s*/,'').trim();
+   const so=rest&&rest!=='Keine'?'<tr><th>Sonderaufgabe</th><th class="num">'+esc(rest)+'</th></tr>':'';
+   const versandHinweis=direkt?'<div style="font-size:21px;font-weight:900;border:3px solid #000;padding:5px 9px;margin:8px 0;text-align:center">VERSAND</div>':'';
   return '<article class="ls"><table class="rahmen"><thead><tr><td><div></div></td></tr></thead><tfoot><tr><td><div></div></td></tr></tfoot><tbody><tr><td class="inhalt"><div class="kopf"><div class="firma">'+esc(br.firma||'')+'</div><div class="adr">'+esc(br.adresse||'')+'</div></div>'+
   '<div class="empf"><div class="links">'+esc(kunde||'')+'<div class="werkzeile">Werk '+esc(f.werk)+' – '+werk+'</div></div><div class="rechts"><p><strong>Materialnummer:</strong> '+esc(f.material)+'</p><p><strong>Kopfmaterialnummer:</strong> '+esc(f.kopf||'')+'</p><p><strong>Bezeichnung:</strong> '+esc(f.bezeichnung)+'</p><p><strong>Rahmenvertrag:</strong> '+esc(f.vertrag)+'</p></div></div>'+
-  '<div class="lsz">Rücklieferschein Nr. '+esc(no)+'<span>Datum: '+heute+'</span></div>'+
+  versandHinweis+'<div class="lsz">Rücklieferschein Nr. '+esc(no)+'<span>Datum: '+heute+'</span></div>'+
   '<table class="pos"><thead><tr><th>Charge</th><th class="num">Stückzahl</th></tr></thead><tbody>'+rows.map(p=>'<tr><td>'+esc(p.charge)+'</td><td class="num">'+fmt(p.menge)+'</td></tr>').join('')+'</tbody><tfoot><tr><th>Gesamtstückzahl</th><th class="num">'+fmt(sum)+'</th></tr>'+so+'</tfoot></table></td></tr></tbody></table></article>';}).join('');
  const t0=document.title;document.title='Lieferschein';window.print();document.title=t0;setTimeout(()=>{$('druck').innerHTML='';},1000);return true;}
 window.w1Drucken=drucken;
@@ -484,18 +492,39 @@ starten();
 (()=>{'use strict';
  const fields={material:'Materialnummer',kopfmaterial:'Kopfmaterialnummer',bezeichnung:'Bezeichnung',charge:'Charge',menge:'Stückzahl',vertrag:'Rahmenvertragsnummer',sonderText:'Sonderaufgabe'};
  const box=document.getElementById('w1Keyboard'),label=document.getElementById('w1KbTitle'),display=document.getElementById('w1KbDisplay'),keys=document.getElementById('w1KbKeys');
- let active=null,position=0,replaceOnFirstKey=false;
+ let active=null,position=0,replaceOnFirstKey=false,originalValue="";
  const numeric=new Set(['material','kopfmaterial','menge','vertrag']);
  function update(){display.textContent=active?.value||' ';display.style.outline=replaceOnFirstKey?'3px solid #d99a00':'none';}
  function close(){box.hidden=true;active=null;replaceOnFirstKey=false;}
- function insert(v){if(!active)return;if(replaceOnFirstKey && v!=='DEL' && v!=='CLEAR'){active.value='';position=0;}replaceOnFirstKey=false;const text=active.value;let a=position;if(v==='DEL'){if(a>0){active.value=text.slice(0,a-1)+text.slice(a);a--;}}else if(v==='CLEAR'){active.value='';a=0;}else{active.value=text.slice(0,a)+v+text.slice(a);a+=v.length;}position=a;active.dispatchEvent(new Event('input',{bubbles:true}));
- // Materialnummern werden vom bestehenden Formular automatisch mit Punkten und Bindestrich formatiert.
- // Daher den Cursor nach jeder Ziffer auf das Ende des formatierten Werts setzen.
- if(active.id==='material'||active.id==='kopfmaterial')position=active.value.length;
- update();}
+ function insert(v){
+  if(!active)return;
+  const isMaterial=active.id==='material'||active.id==='kopfmaterial';
+  if(isMaterial){
+   // Separates Ziffernmodell: niemals in den formatierten Punkten/Bindestrichen schreiben.
+   let digits=replaceOnFirstKey?'':active.value.replace(/\D/g,'');
+   if(v==='CLEAR')digits='';
+   else if(v==='DEL')digits=digits.slice(0,-1);
+   else if(/^\d$/.test(v))digits=(digits+v).slice(0,14);
+   replaceOnFirstKey=false;
+   active.value=digits;
+   // Bestehender input-Handler übernimmt die Formatierung.
+   active.dispatchEvent(new Event('input',{bubbles:true}));
+   position=active.value.length;
+   update();
+   return;
+  }
+  if(replaceOnFirstKey && v!=='DEL' && v!=='CLEAR'){active.value='';position=0;}
+  replaceOnFirstKey=false;
+  const text=active.value;let a=position;
+  if(v==='DEL'){if(a>0){active.value=text.slice(0,a-1)+text.slice(a);a--;}}
+  else if(v==='CLEAR'){active.value='';a=0;}
+  else{active.value=text.slice(0,a)+v+text.slice(a);a+=v.length;}
+  position=a;active.dispatchEvent(new Event('input',{bubbles:true}));update();
+ }
  function key(value,title,wide){const b=document.createElement('button');b.type='button';b.textContent=title||value;if(wide)b.className='wide';b.addEventListener('click',()=>insert(value));keys.appendChild(b);}
- function open(el){if(active===el&&!box.hidden)return;active=el;position=el.value.length;replaceOnFirstKey=!!el.value;label.textContent='Eingabe: '+fields[el.id];keys.replaceChildren();const num=numeric.has(el.id);keys.className='keys'+(num?' numeric':'');if(num){for(const c of '123456789')key(c);key('CLEAR','Alles löschen');key('0');key('DEL','⌫ Löschen');}else{for(const c of 'QWERTZUIOPASDFGHJKLYXCVBNMÄÖÜß')key(c);for(const c of '0123456789')key(c);key(' ','Leerzeichen',true);key('-');key('.');key('DEL','⌫ Löschen',true);key('CLEAR','Alles löschen',true);}update();box.hidden=false;}
+ function open(el){if(active===el&&!box.hidden)return;active=el;originalValue=el.value;position=el.value.length;replaceOnFirstKey=!!el.value;label.textContent='Eingabe: '+fields[el.id];keys.replaceChildren();const num=numeric.has(el.id);keys.className='keys'+(num?' numeric':'');if(num){for(const c of '123456789')key(c);key('CLEAR','Alles löschen');key('0');key('DEL','⌫ Löschen');}else{for(const c of 'QWERTZUIOPASDFGHJKLYXCVBNMÄÖÜß')key(c);for(const c of '0123456789')key(c);key(' ','Leerzeichen',true);key('-');key('.');key('DEL','⌫ Löschen',true);key('CLEAR','Alles löschen',true);}update();box.hidden=false;}
  for(const id of Object.keys(fields)){const el=document.getElementById(id);if(!el)continue;el.setAttribute('inputmode','none');el.addEventListener('click',()=>open(el));el.addEventListener('focus',()=>{if(box.hidden)open(el);});}
+ document.getElementById('w1KbBack').addEventListener('click',()=>{const el=active;if(el){el.value=originalValue;el.dispatchEvent(new Event('input',{bubbles:true}));}close();if(el)el.blur();});
  document.getElementById('w1KbDone').addEventListener('click',()=>{const el=active;close();if(el){el.dispatchEvent(new Event('change',{bubbles:true}));el.blur();}});
  document.getElementById('cancelEntry').addEventListener('click',close);
 })();
