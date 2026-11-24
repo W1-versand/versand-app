@@ -122,6 +122,23 @@ input,select{width:100%;min-height:54px;padding:8px 12px;border:3px solid #cbd5e
 #w1Keyboard .keys button.wide{grid-column:span 2}
 #w1Keyboard .done{width:100%;min-height:65px;margin-top:10px;border:0;border-radius:12px;background:#147a3b;color:white;font:bold 26px Arial}
 @media(max-width:600px){#w1Keyboard .keys button{font-size:17px;min-height:44px}#w1Keyboard .display{font-size:24px}}
+
+/* Kompakte Kontrollseite – nur Bildschirmdarstellung */
+@media screen {
+ body.has-result main{padding:6px 12px;gap:4px}
+ body.has-result main>h1{font-size:22px;line-height:1.15}
+ body.has-result #status{font-size:18px;min-height:0;line-height:1.2;padding-right:135px}
+ body.has-result #screen2{gap:5px;position:relative}
+ body.has-result #screen2>div:first-child{position:absolute;right:0;top:-30px}
+ body.has-result #showphoto{min-height:26px!important;padding:3px 8px!important}
+ body.has-result #screen2 .grid{gap:5px 10px}
+ body.has-result #screen2 .grid input{min-height:48px;padding:5px 9px;margin-top:2px}
+ body.has-result #screen2 p:empty{display:none}
+ body.has-result #werkwahl button{min-height:min(12vh,100px)}
+ body.has-result #direktVersand{min-height:58px!important}
+ body.has-result #sonderBtn{min-height:52px}
+ body.has-result .aktion .btn{min-height:min(12vh,100px)}
+}
 </style></head><body><main>
 <h1>📦 W1 – Versand</h1>
 <p id="status" role="status">Bereit für den nächsten Begleitschein.</p>
