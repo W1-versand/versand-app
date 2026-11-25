@@ -149,6 +149,7 @@ input,select{width:100%;min-height:54px;padding:8px 12px;border:3px solid #cbd5e
  <button class="btn green" id="finish" hidden>✓ FERTIG – LIEFERSCHEINE DRUCKEN</button>
  
  <div class="row"><button class="btn secondary" id="reprint" type="button">Letzte Lieferscheine nochmal drucken</button><button class="btn secondary" id="sammel" type="button">Sammellieferschein heute (ohne Preise)</button><label class="btn secondary" for="file" style="margin:0">Bild aus Datei auswählen</label></div>
+ <button class="btn green" id="sammelMail" type="button">✉ Sammellieferschein per Mail senden</button>
 </div>
 
 <div class="screen" id="screen2">
@@ -418,6 +419,18 @@ $('sammel').addEventListener('click',async()=>{try{const d=await call('w1SammelH
   return '<h2 style="font-size:16px;margin:16px 0 4px">Werk '+w+' – '+(w==='5113'?'Wagenfeld':'Diepholz')+'</h2><table class="pos"><thead><tr><th>Lieferschein</th><th>Materialnummer</th><th>Bezeichnung</th><th>Rahmenvertrag</th><th class="num">Menge</th></tr></thead><tbody>'+t.map(x=>'<tr><td>'+esc(x.nr)+'</td><td>'+esc(x.material)+'</td><td>'+esc(x.bezeichnung)+'</td><td>'+esc(x.vertrag)+'</td><td class="num">'+fmt(x.menge)+'</td></tr>').join('')+'</tbody><tfoot><tr><th colspan="4">Summe Werk '+w+'</th><th class="num">'+fmt(sum)+'</th></tr></tfoot></table>';}).join('');
  $('druck').innerHTML='<article class="sammel"><table class="rahmen"><thead><tr><td><div></div></td></tr></thead><tfoot><tr><td><div></div></td></tr></tfoot><tbody><tr><td class="inhalt"><div class="head"><h1>Sammellieferschein W1</h1><div>Datum: '+dat+'</div></div>'+teile+'<p style="margin-top:14px"><strong>Gesamtmenge: '+fmt(gesamt)+'</strong></p></td></tr></tbody></table></article>';
  const t0=document.title;document.title='Sammellieferschein';window.print();document.title=t0;setTimeout(()=>{$('druck').innerHTML='';},1000);}catch(e){await frage('Nicht möglich: '+(e.message||e),'OK');}});
+$('sammelMail').addEventListener('click',async()=>{
+ const b=$('sammelMail');b.disabled=true;
+ try{
+  const info=await call('w1SammelMailInfo');
+  if(!await frage('Sammellieferschein heute (ohne Preise) an '+info.adresse+' senden?','✓ MAIL SENDEN','ZURÜCK'))return;
+  status('⏳ Sammellieferschein wird versendet …');
+  const r=await call('w1SammelMailSenden',info.adresse);
+  status('✓ Sammellieferschein per Mail versendet.');
+  await frage('Mail versendet an '+r.adresse,'OK');
+ }catch(e){status('Mailversand nicht bestätigt.');await frage('Mailversand nicht bestätigt: '+(e.message||e)+'. Vor erneutem Versand bitte prüfen.','OK');}
+ finally{b.disabled=false;}
+});
 $('finish').addEventListener('click',async()=>{if(!hasData)return;const list=window.w1LastData.positionen;
  if(!await frage(list.length+' Palette(n) = '+gruppen(list).size+' Lieferschein(e) im Format A5 werden jetzt gedruckt.','✓ JA, DRUCKEN','ZURÜCK'))return;
  $('finish').disabled=true;status('⏳ Lieferscheine werden erstellt …');
