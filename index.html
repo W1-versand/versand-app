@@ -58,10 +58,16 @@ input,select{width:100%;min-height:54px;padding:8px 12px;border:3px solid #cbd5e
 .gelbnote{background:#fff3a8;border-radius:10px;padding:8px 10px;color:#5c4300;font-weight:bold}
 .missing-note{color:#a51924;font-weight:bold;font-size:18px;margin:0}
 #speicherstatus{font-size:20px;font-weight:bold;margin:0;color:#a51924;min-height:0}
-.werk{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.werk{display:grid;grid-template-columns:1fr 2fr;gap:8px 14px;align-items:center}
+.werk [data-w="5113"]{min-height:56px!important;font-size:27px}
+.werk [data-w="5125"]{font-size:36px;line-height:1.05}
+.werk [data-w="5125"] small{font-size:17px}
+.werk #direktVersand{grid-column:2;min-height:48px!important;font-size:22px;border-radius:12px}
+.werk #direktVersand:disabled{opacity:.45;cursor:default}
 .werk.invalid{outline:5px solid #c5222b;border-radius:20px}
 .werk button{min-height:min(15vh,125px);font:bold 32px Arial;border:5px solid #125aa5;background:#e5edf5;color:#125aa5;border-radius:18px;cursor:pointer}
 .werk button.on{background:#147a3b;color:#fff;border-color:#0d5a2a}
+.werk button[data-w="5125"]:not(.on){background:#d9f2d5;color:#185b32;border-color:#69a96a}
 .sonderbtn{min-height:62px;font-size:22px;background:#e5edf5;color:#174c80;border:3px dashed #9fb6cf;box-shadow:none}.sonderbtn.aktiv{background:#ffb74d;color:#3b1d00;border:3px solid #c77800;font-size:24px}
 #sonderBox{position:fixed;inset:0;background:#000b;z-index:60;display:flex;align-items:center;justify-content:center;padding:14px}#sonderBox .box{background:#fff;border-radius:22px;padding:20px;max-width:760px;width:100%;max-height:96vh;overflow:auto;display:flex;flex-direction:column;gap:12px}#sonderBox h2{margin:0;font-size:26px;text-align:center}#sonderBox .btn{min-height:78px;font-size:28px}#sonderBox input{font-size:28px;min-height:70px}
 .aktion{display:grid;grid-template-columns:2fr 1fr;gap:14px}
@@ -134,7 +140,7 @@ input,select{width:100%;min-height:54px;padding:8px 12px;border:3px solid #cbd5e
  body.has-result #screen2 .grid{gap:5px 10px}
  body.has-result #screen2 .grid input{min-height:48px;padding:5px 9px;margin-top:2px}
  body.has-result #screen2 p:empty{display:none}
- body.has-result #werkwahl button{min-height:min(12vh,100px)}
+ body.has-result #werkwahl button[data-w]{min-height:min(12vh,100px)}
  body.has-result #direktVersand{min-height:58px!important}
  body.has-result #sonderBtn{min-height:52px}
  body.has-result .aktion .btn{min-height:min(12vh,100px)}
@@ -171,8 +177,8 @@ input,select{width:100%;min-height:54px;padding:8px 12px;border:3px solid #cbd5e
  <p id="materialbelegHinweis" hidden role="status" style="margin:0;padding:3px 7px;background:#fff3a8;color:#795000;font:bold 15px Arial;border-radius:5px">⚠ Materialbeleg bereits vorhanden</p>
   <p id="missing" class="missing-note" aria-live="polite"></p>
  <p id="hinweis"></p>
- <div class="werk invalid" id="werkwahl"><button type="button" data-w="5113">5113<br>WAGENFELD</button><button type="button" data-w="5125">5125<br>DIEPHOLZ</button></div>
- <button class="btn" id="direktVersand" type="button" aria-pressed="false" style="min-height:74px;font-size:25px;background:#e5edf5;color:#174c80;border:3px solid #9fb6cf">📦 VERSAND</button>
+ <div class="werk invalid" id="werkwahl"><button type="button" data-w="5113">5113</button><button type="button" data-w="5125">5125<br><small>Diepholz</small></button>
+ <button class="btn" id="direktVersand" type="button" disabled aria-pressed="false" style="min-height:74px;font-size:25px;background:#e5edf5;color:#174c80;border:3px solid #9fb6cf">📦 VERSAND</button></div>
  <button class="btn sonderbtn" id="sonderBtn" type="button">Sonderaufgabe (nur bei Bedarf): Keine</button>
  <p id="speicherstatus"></p>
  <div class="aktion"><button class="btn green" id="save" type="button">✓ SPEICHERN</button><button class="btn red" id="cancelEntry" type="button">ABBRECHEN</button></div>
@@ -382,19 +388,20 @@ window.w1BelegPruefen=async(beleg,epoch,aktuell)=>{
 };
 function val(id){return $(id).value.trim();}
 function normalMenge(v){const t=String(v??'').trim().replace(/\s+/g,'').replace(/^Q/i,'');return /^(?:[0-9]+|[1-9][0-9]{0,2}(?:\.[0-9]{3})+)$/.test(t)?t.replace(/\./g,''):t;}
-function markFields(){const labels={material:'Materialnummer',kopfmaterial:'Kopfmaterialnummer',charge:'Charge',menge:'Menge',vertrag:'Rahmenvertrag',bezeichnung:'Artikelbezeichnung',werk:'Zielwerk'};const missing=[];for(const [id,name] of Object.entries(labels)){const el=$(id);const value=id==='menge'?normalMenge(el.value):el.value.trim();const bad=!value||(id==='menge'&&(!/^\d+$/.test(value)||Number(value)<1));el.classList.toggle('invalid',bad);if(bad)missing.push(name);}$('werkwahl').classList.toggle('invalid',!$('werk').value);if(window.w1SonderLabel)window.w1SonderLabel();$('missing').textContent=window.w1Pending&&missing.length?'Bitte ergänzen oder prüfen: '+missing.join(', '):'';return missing;}
+function markFields(){const labels={material:'Materialnummer',kopfmaterial:'Kopfmaterialnummer',charge:'Charge',menge:'Menge',vertrag:'Rahmenvertrag',bezeichnung:'Artikelbezeichnung',werk:'Zielwerk'};const missing=[];for(const [id,name] of Object.entries(labels)){const el=$(id);const value=id==='menge'?normalMenge(el.value):el.value.trim();const bad=!value||(id==='menge'&&(!/^\d+$/.test(value)||Number(value)<1));el.classList.toggle('invalid',bad);if(bad)missing.push(name);}$('werkwahl').classList.toggle('invalid',!$('werk').value);if(window.w1SonderLabel)window.w1SonderLabel();direktSync();$('missing').textContent=window.w1Pending&&missing.length?'Bitte ergänzen oder prüfen: '+missing.join(', '):'';return missing;}
 window.markFields=markFields;
 for(const id of ['material','kopfmaterial','charge','menge','vertrag','bezeichnung','werk']){const el=$(id);el.addEventListener('input',()=>{el.classList.remove('gelb');markFields();});el.addEventListener('change',markFields);}
 /* Große Werk-Knöpfe */
-for(const b of document.querySelectorAll('#werkwahl button'))b.addEventListener('click',()=>{$('werk').value=b.dataset.w;$('werk').dispatchEvent(new Event('change',{bubbles:true}));for(const x of document.querySelectorAll('#werkwahl button'))x.classList.toggle('on',x===b);$('speicherstatus').textContent='';markFields();});
-const werkReset=()=>{for(const x of document.querySelectorAll('#werkwahl button'))x.classList.remove('on');};
+for(const b of document.querySelectorAll('#werkwahl button[data-w]'))b.addEventListener('click',()=>{$('werk').value=b.dataset.w;$('werk').dispatchEvent(new Event('change',{bubbles:true}));for(const x of document.querySelectorAll('#werkwahl button[data-w]'))x.classList.toggle('on',x===b);$('speicherstatus').textContent='';markFields();});
+const werkReset=()=>{for(const x of document.querySelectorAll('#werkwahl button[data-w]'))x.classList.remove('on');};
 const direktBtn=$('direktVersand');
-direktBtn.addEventListener('click',()=>{const on=direktBtn.getAttribute('aria-pressed')!=='true';direktBtn.setAttribute('aria-pressed',String(on));direktBtn.textContent=on?'✓ VERSAND':'📦 VERSAND';direktBtn.style.background=on?'#147a3b':'#e5edf5';direktBtn.style.color=on?'white':'#174c80';});
+direktBtn.addEventListener('click',()=>{if($('werk').value!=='5125')return;const on=direktBtn.getAttribute('aria-pressed')!=='true';direktBtn.setAttribute('aria-pressed',String(on));direktBtn.textContent=on?'✓ VERSAND':'📦 VERSAND';direktBtn.style.background=on?'#147a3b':'#e5edf5';direktBtn.style.color=on?'white':'#174c80';});
 function direktReset(){direktBtn.setAttribute('aria-pressed','false');direktBtn.textContent='📦 VERSAND';direktBtn.style.background='#e5edf5';direktBtn.style.color='#174c80';}
-$('cancelEntry').addEventListener('click',()=>{pendingId='';direktReset();werkReset();$('speicherstatus').textContent='';markFields();});
+function direktSync(){const erlaubt=$('werk').value==='5125';direktBtn.disabled=!erlaubt;if(!erlaubt)direktReset();}
+ $('cancelEntry').addEventListener('click',()=>{pendingId='';direktReset();werkReset();$('speicherstatus').textContent='';markFields();});
 $('file').addEventListener('change',werkReset);$('camera').addEventListener('change',werkReset);
 function w1SonderWert(){return val('sonderfrei')||val('sonder')||'Keine';}
-function current(){return {id:pendingId||(pendingId=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random())),material:window.w1FmtNr(val('material')),kopf:window.w1FmtNr(val('kopfmaterial')),charge:val('charge'),menge:normalMenge(val('menge')),vertrag:val('vertrag'),bezeichnung:val('bezeichnung'),werk:val('werk'),sonder:w1SonderWert(),materialbeleg:window.w1Materialbeleg||'',direktversand:direktBtn.getAttribute('aria-pressed')==='true'};}
+function current(){return {id:pendingId||(pendingId=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random())),material:window.w1FmtNr(val('material')),kopf:window.w1FmtNr(val('kopfmaterial')),charge:val('charge'),menge:normalMenge(val('menge')),vertrag:val('vertrag'),bezeichnung:val('bezeichnung'),werk:val('werk'),sonder:w1SonderWert(),materialbeleg:window.w1Materialbeleg||'',direktversand:val('werk')==='5125'&&direktBtn.getAttribute('aria-pressed')==='true'};}
 function validate(p){markFields();if(!p.werk)throw Error('Bitte unten das Zielwerk wählen (5113 oder 5125).');const NRX=/^\d{3}\.\d{3}\.\d{3}\.\d{3}-\d{2}$/;if(p.material&&!NRX.test(p.material))throw Error('Materialnummer unvollständig (14 Ziffern nötig): '+p.material);if(p.kopf&&!NRX.test(p.kopf))throw Error('Kopfmaterialnummer unvollständig (14 Ziffern nötig): '+p.kopf);for(const [k,n] of [['material','Materialnummer'],['kopf','Kopfmaterial'],['charge','Charge'],['menge','Stückzahl'],['vertrag','Rahmenvertrag'],['bezeichnung','Bezeichnung']])if(!p[k])throw Error('Bitte ausfüllen: '+n);if(!/^\d+$/.test(p.menge)||Number(p.menge)<1)throw Error('Ungültige Stückzahl.');if(($('hinweis').textContent||'').includes('WARNUNG'))throw Error('Bitte zuerst die Warnung klären (Rahmenvertrag passt nicht zur Tabelle).');}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function gruppen(list){const g=new Map();for(const p of list){const k=p.lieferschein||JSON.stringify([p.werk,p.material,p.vertrag,p.sonder,p.direktversand]);if(!g.has(k))g.set(k,[]);g.get(k).push(p);}return g;}
